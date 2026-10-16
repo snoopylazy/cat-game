@@ -29,16 +29,16 @@ const skinById = id => SKINS.find(s => s.id === id) || SKINS[0];
 
 /* ---------------- data: levels (10) ---------------- */
 const LEVELS = [
-  { name:'Scared Kitten',   skin:'snowpuff', hits:4,  push:0.26, dmg:7,  phase:0.4 },
-  { name:'Sunny Tom',       skin:'tabby',    hits:5,  push:0.30, dmg:8,  phase:1.3 },
-  { name:'Alley Shadow',    skin:'shadow',   hits:5,  push:0.34, dmg:9,  phase:2.2 },
-  { name:'Calico Crazy',    skin:'calico',   hits:6,  push:0.39, dmg:10, phase:0.9 },
-  { name:'Duke Tuxedo',     skin:'tuxedo',   hits:6,  push:0.44, dmg:11, phase:3.0 },
-  { name:'Mister Siamese',  skin:'siamese',  hits:7,  push:0.49, dmg:12, phase:1.7 },
-  { name:'Ninja Neko',      skin:'ninja',    hits:7,  push:0.53, dmg:13, phase:2.6 },
-  { name:'Wizard Whiskers', skin:'wizard',   hits:8,  push:0.57, dmg:14, phase:0.2 },
-  { name:'Shadowfang',      skin:'shadow',   hits:9,  push:0.60, dmg:16, phase:1.1 },
-  { name:'King Whiskers',   skin:'king',    hits:10, push:0.64, dmg:18, phase:2.9 },
+  { name:'Scared Kitten',   skin:'snowpuff', hits:4,  push:0.26, dmg:7,  phase:0.4, snd:'sounds/stu9-cute-cat-352656.mp3' },
+  { name:'Sunny Tom',       skin:'tabby',    hits:5,  push:0.30, dmg:8,  phase:1.3, snd:'sounds/dragon-studio-cute-cat-meow-472372.mp3' },
+  { name:'Alley Shadow',    skin:'shadow',   hits:5,  push:0.34, dmg:9,  phase:2.2, snd:'sounds/dragon-studio-cat-meow-401729.mp3' },
+  { name:'Calico Crazy',    skin:'calico',   hits:6,  push:0.39, dmg:10, phase:0.9, snd:'sounds/virtual_vibes-cute-cat-meow-400946.mp3' },
+  { name:'Duke Tuxedo',     skin:'tuxedo',   hits:6,  push:0.44, dmg:11, phase:3.0, snd:'sounds/ribhavagrawal-cat-meowing-type-02-293290.mp3' },
+  { name:'Mister Siamese',  skin:'siamese',  hits:7,  push:0.49, dmg:12, phase:1.7, snd:'sounds/virtual_vibes-cat-meow-sound-383823.mp3' },
+  { name:'Ninja Neko',      skin:'ninja',    hits:7,  push:0.53, dmg:13, phase:2.6, snd:'sounds/alex_jauk-annoyed-cat-meows-angrily-438006.mp3' },
+  { name:'Wizard Whiskers', skin:'wizard',   hits:8,  push:0.57, dmg:14, phase:0.2, snd:'sounds/freesound_community-cat-meow-14536.mp3' },
+  { name:'Shadowfang',      skin:'shadow',   hits:9,  push:0.60, dmg:16, phase:1.1, snd:'sounds/tanweraman-angry-cat-hq-sound-effect-240675.mp3' },
+  { name:'King Whiskers',   skin:'king',    hits:10, push:0.64, dmg:18, phase:2.9, snd:'sounds/poorartistt-angry-cat-sound-effect-no-copyright-405796.mp3' },
 ];
 const HP_PER_HIT = 20;       // enemy max hp = hits * HP_PER_HIT
 const PLAYER_MAX = 100;
@@ -78,6 +78,7 @@ function getNoise(ctx){
 
 const SFX = {
   muted: save.muted,
+  vol: 0.25,   // effect level — sits under the real cat voices
   tone(freq, dur, type, vol, slideTo){
     if(this.muted) return;
     try{
@@ -87,7 +88,7 @@ const SFX = {
       o.frequency.setValueAtTime(freq, t);
       if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), t + dur);
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(vol || 0.18, t + 0.015);
+      g.gain.exponentialRampToValueAtTime((vol || 0.18) * this.vol, t + 0.015);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       o.connect(g).connect(ctx.destination);
       o.start(t); o.stop(t + dur + 0.03);
@@ -100,7 +101,7 @@ const SFX = {
       const src = ctx.createBufferSource(); src.buffer = getNoise(ctx);
       const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hp || 900;
       const g = ctx.createGain();
-      g.gain.setValueAtTime(vol || 0.16, t);
+      g.gain.setValueAtTime((vol || 0.16) * this.vol, t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.2));
       src.connect(f).connect(g).connect(ctx.destination);
       src.start(t); src.stop(t + (dur || 0.2) + 0.02);
@@ -192,7 +193,7 @@ const SFX = {
       const ctx = getAudioCtx(), t = ctx.currentTime, dur = 0.65;
       const out = ctx.createGain();
       out.gain.setValueAtTime(0.0001, t);
-      out.gain.exponentialRampToValueAtTime(0.36, t + 0.05);
+      out.gain.exponentialRampToValueAtTime(0.36 * this.vol, t + 0.05);
       out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       out.connect(ctx.destination);
 
@@ -222,7 +223,7 @@ const SFX = {
       const pk = ctx.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 4200; pk.gain.value = 9; pk.Q.value = 1.1;
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.22, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.22 * this.vol, t + 0.03);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       src.connect(hp).connect(pk).connect(g).connect(ctx.destination);
       src.start(t); src.stop(t + dur + 0.02);
@@ -239,6 +240,51 @@ const SFX = {
   click(){ this.tone(660, 0.07, 'square', 0.08); },
   buy(){ [784, 1047].forEach((f, i) => setTimeout(() => this.tone(f, 0.16, 'triangle', 0.14), i * 90)); },
   deny(){ this.tone(200, 0.18, 'square', 0.12, 120); },
+};
+
+/* ---------------- audio: real enemy meow files ----------------
+   Each level's enemy has its own MP3 from the sounds/ folder.
+   Files are decoded once and cached; if a file can't load (e.g. opened
+   via file://), we fall back to the synthesized enemyMeow(). */
+const Meows = {
+  cache: new Map(),
+  /* resolve relative to this script's folder, so it works no matter
+     where the page was opened from (/, /cat-vs-cat/, a subpath, …) */
+  base: (document.querySelector('script[src*="game.js"]')?.src || document.baseURI).replace(/[^/]*$/, ''),
+  resolve(src){ try{ return new URL(src, this.base).href; }catch(e){ return src; } },
+  load(src){
+    if(this.cache.has(src)) return this.cache.get(src);
+    const url = this.resolve(src);
+    const p = fetch(url)
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(b => getAudioCtx().decodeAudioData(b))
+      .then(buf => { console.info('[Meows] loaded:', url); return buf; });
+    p.catch(err => {
+      console.warn('[Meows] could not load', url, '—', err.message || err, '— falling back to synth voice');
+      this.cache.delete(src);   // allow retry on next play
+    });
+    this.cache.set(src, p);
+    return p;
+  },
+  preload(src){ if(src) this.load(src).catch(() => {}); },
+  play(src, vol){
+    if(SFX.muted || !src) return;
+    const ctx = getAudioCtx();
+    if(ctx.state === 'suspended') ctx.resume();   // browser autoplay safety
+    if(this.active && this.active.src === src && this.active.until > ctx.currentTime + 0.1) return; // previous shout still playing
+    this.load(src).then(buf => {
+      if(SFX.muted) return;
+      const ctx = getAudioCtx();
+      const srcNode = ctx.createBufferSource();
+      srcNode.buffer = buf;
+      srcNode.playbackRate.value = rand(0.94, 1.06);   // slight variation each shout
+      const g = ctx.createGain();
+      g.gain.value = vol || 0.85;
+      srcNode.connect(g).connect(ctx.destination);
+      srcNode.start();
+      this.active = { src, until: ctx.currentTime + buf.duration / srcNode.playbackRate.value };
+    }).catch(() => { if(!SFX.muted) SFX.enemyMeow(); });   // synth fallback
+  },
 };
 
 /* ---------------- mic ---------------- */
@@ -497,6 +543,7 @@ function startBattle(level){
 
   mountCat($('#p-cat'), skinById(save.equipped));
   mountCat($('#e-cat'), skinById(L.skin));
+  Meows.preload(L.snd);   // have the enemy's voice ready before the first shout
   $('#p-name').textContent = 'You';
   $('#e-name').innerHTML = (level === LEVELS.length ? icon('crown') + ' ' : '') + L.name;
   $('#lvl-pill').textContent = 'LV ' + level + ' / 10';
@@ -576,6 +623,7 @@ function landHit(byPlayer){
     flash('enemy', 'attacking', 400);
     flash('player', 'hurt', 360);
     spawnFx('player', '-' + L.dmg, '#ff4d9d');
+    Meows.play(L.snd, 0.7);   // the enemy's own attack cry
     SFX.hiss();
   }
   updateHP();
@@ -637,7 +685,9 @@ function updateBattle(dt){
 
   // sfx throttled
   if(G.myLevel > 0.35 && G.t - G.lastMeow > 0.9){ G.lastMeow = G.t; SFX.meow(); }
-  if(G.enemyLevelVal > 0.35 && G.t - G.lastGrowl > 1.1){ G.lastGrowl = G.t; SFX.enemyMeow(); }
+  // enemy voice gate scales with their strength, so even weak early cats keep vocalizing
+  const voiceGate = Math.min(0.35, L.push * 0.6);
+  if(G.enemyLevelVal > voiceGate && G.t - G.lastGrowl > 1.1){ G.lastGrowl = G.t; Meows.play(L.snd); }
 
   render();
 }

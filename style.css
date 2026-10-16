@@ -16,10 +16,13 @@
 
   /* theme-able surfaces */
   --page-bg:
-    radial-gradient(1200px 700px at 50% -10%, #2a1a5c 0%, transparent 60%),
-    radial-gradient(900px 600px at 90% 110%, #4a1040 0%, transparent 55%),
-    linear-gradient(160deg,var(--bg-1),var(--bg-0) 70%);
-  --topbar-bg:linear-gradient(#160d2ecc,transparent);
+    radial-gradient(1200px 700px at 50% -10%, #161616 0%, transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, #101010 0%, transparent 55%),
+    linear-gradient(160deg,#0c0c0c,#000000 70%);
+  --topbar-bg:linear-gradient(#000000cc,transparent);
+  --btn-accent:#ffffff;
+  --btn-accent-ink:#0a0a0a;
+  --btn-accent-glow:rgba(255,255,255,.22);
   --panel-bg:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
   --well:rgba(0,0,0,.45);
   --hover:rgba(255,255,255,.11);
@@ -45,9 +48,12 @@
   --card:rgba(40,20,90,.05);
   --line:rgba(40,20,90,.16);
   --page-bg:
-    radial-gradient(1200px 700px at 50% -10%, #e4dbff 0%, transparent 60%),
-    radial-gradient(900px 600px at 90% 110%, #ffe1f1 0%, transparent 55%),
-    linear-gradient(160deg,#ffffff,#f2effb 70%);
+    radial-gradient(1200px 700px at 50% -10%, #ececec 0%, transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, #e6e6e6 0%, transparent 55%),
+    linear-gradient(160deg,#ffffff,#f2f2f2 70%);
+  --btn-accent:#111111;
+  --btn-accent-ink:#ffffff;
+  --btn-accent-glow:rgba(0,0,0,.25);
   --topbar-bg:linear-gradient(rgba(255,255,255,.94),transparent);
   --panel-bg:linear-gradient(180deg,#ffffff,#f7f5ff);
   --well:rgba(40,20,90,.09);
@@ -113,11 +119,12 @@ input[type=range]{accent-color:var(--cyan)}
 .btn:hover{transform:translateY(-2px);background:var(--hover)}
 .btn:active{transform:translateY(0) scale(.98)}
 .btn-primary{
-  background:linear-gradient(135deg,var(--pink),#a855f7);
+  background:var(--btn-accent);
   border-color:transparent;
-  box-shadow:0 8px 26px rgba(255,77,157,.38);
+  color:var(--btn-accent-ink);
+  box-shadow:0 8px 26px var(--btn-accent-glow);
 }
-.btn-primary:hover{box-shadow:0 12px 34px rgba(255,77,157,.55)}
+.btn-primary:hover{box-shadow:0 12px 34px var(--btn-accent-glow)}
 .btn-ghost{background:transparent;border-color:transparent;color:var(--muted);min-width:auto;padding:8px 14px;font-size:.9rem}
 .icon-btn{
   width:44px;height:44px;border-radius:12px;font-size:1.2rem;
@@ -179,8 +186,8 @@ input[type=range]{accent-color:var(--cyan)}
   border-radius:10px;padding:8px;font-weight:800;font-size:.82rem;
   background:var(--chip);border:1.5px solid var(--line);
 }
-.shop-card button.buy{background:linear-gradient(135deg,var(--amber),#f59e0b);color:#3a2400;border-color:transparent}
-.shop-card button.equip{background:linear-gradient(135deg,var(--cyan),#0ea5e9);color:#04202a;border-color:transparent}
+.shop-card button.buy{background:var(--amber);color:#3a2400;border-color:transparent}
+.shop-card button.equip{background:var(--cyan);color:#04202a;border-color:transparent}
 .shop-card button:disabled{opacity:.45;cursor:not-allowed}
 .badge{font-size:.7rem;font-weight:800;color:var(--cyan);letter-spacing:1px}
 
@@ -347,11 +354,11 @@ input[type=range]{accent-color:var(--cyan)}
   transition:transform .12s, box-shadow .2s;
 }
 .btn-special.ready{
-  background:linear-gradient(135deg,#a855f7,var(--pink));color:#fff;border-color:transparent;
-  box-shadow:0 0 22px rgba(255,77,157,.7);animation:ready .7s ease-in-out infinite;
+  background:var(--btn-accent);color:var(--btn-accent-ink);border-color:transparent;
+  box-shadow:0 0 22px var(--btn-accent-glow);animation:ready .7s ease-in-out infinite;
 }
 .btn-special.ready:hover{transform:scale(1.05)}
-@keyframes ready{50%{box-shadow:0 0 34px rgba(255,77,157,1)}}
+@keyframes ready{50%{box-shadow:0 0 34px var(--btn-accent-glow)}}
 
 /* ---------- Overlay (pause) ---------- */
 .overlay{
