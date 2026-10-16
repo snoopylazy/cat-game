@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Cat vs Cat — Sound Battle</title>
+<script>
+/* apply saved theme before paint to avoid a flash */
+try{
+  var _s = JSON.parse(localStorage.getItem('catvscat.save.v1') || '{}');
+  if(_s.theme === 'light') document.documentElement.dataset.theme = 'light';
+}catch(e){}
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ ICON SPRITE (no dependencies) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.4v2.1M12 19.5v2.1M2.4 12h2.1M19.5 12h2.1M5.2 5.2l1.5 1.5M17.3 17.3l1.5 1.5M18.8 5.2l-1.5 1.5M6.7 17.3l-1.5 1.5"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.6 14.3A8.6 8.6 0 0 1 9.7 3.4a8.6 8.6 0 1 0 10.9 10.9z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.4h3L11 5.8v12.4l-4-3.6H4z"/><path d="M15 9.1a4 4 0 0 1 0 5.8"/><path d="M17.7 6.5a8 8 0 0 1 0 11"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.4h3L11 5.8v12.4l-4-3.6H4z"/><path d="M15.8 9.6l5.2 5.2M21 9.6l-5.2 5.2"/></symbol>
+    <symbol id="i-paw" viewBox="0 0 24 24"><circle cx="7.4" cy="10" r="1.9"/><circle cx="12" cy="7.8" r="1.9"/><circle cx="16.6" cy="10" r="1.9"/><path d="M12 12.4c-3 0-5.1 2.1-5.1 4.4S9.4 21 12 21s5.1-1.9 5.1-4.2-2.1-4.4-5.1-4.4z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19.2 12z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.6 8h12.8l-1.2 11.6H6.8z"/><path d="M9 8V6.6a3 3 0 0 1 6 0V8"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4.6 10.4h9.6a4.6 4.6 0 0 1 0 9.2H9"/><path d="M8.1 6.4l-3.9 4 3.9 4"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M19.4 10.4H9.8a4.6 4.6 0 0 0 0 9.2H15"/><path d="M15.9 6.4l3.9 4-3.9 4"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.6 11L12 4l8.4 7"/><path d="M6.3 9.4V20h11.4V9.4"/><path d="M10.4 20v-5h3.2v5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></symbol>
+    <symbol id="i-micoff" viewBox="0 0 24 24"><path d="M9 6a3 3 0 0 1 6 0v5"/><path d="M5.5 11.5a6.5 6.5 0 0 0 9.7 5.6"/><path d="M12 18v3"/><path d="M4 3.6l16 16.8"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.6" y="6.4" width="18.8" height="11.2" rx="2.2"/><path d="M6 10h.01M9.4 10h.01M12.8 10h.01M16.2 10h.01M6.6 13.8h10.8"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="7" y="5" width="3.6" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.6 4.4h8.8v4.7a4.4 4.4 0 0 1-8.8 0z"/><path d="M7.6 6H4.9v1.7A3 3 0 0 0 7.2 10.6"/><path d="M16.4 6h2.7v1.7a3 3 0 0 1-2.3 2.9"/><path d="M12 13.5V17"/><path d="M8.9 20h6.2"/><path d="M9.6 17h4.8v3H9.6z"/></symbol>
+    <symbol id="i-sad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9.8h.01M15 9.8h.01"/><path d="M8.4 17.2Q12 13.2 15.6 17.2"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8.6l4.3 3.6L12 5.1l4.7 7.1L21 8.6V19H3z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.6l4.6 4.6L19 7"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 4l1.8 5.3L19 11l-5.2 1.7L12 18l-1.8-5.3L5 11l5.2-1.7z"/></symbol>
+  </defs>
+</svg>
+
+<div id="app">
+
+  <!-- ============ MENU ============ -->
+  <section class="screen active" id="screen-menu">
+    <div class="menu-top">
+      <div class="coin-pill" id="menu-coins"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> <span>0</span></div>
+      <div class="top-actions">
+        <button class="icon-btn" id="menu-theme" title="Dark / Light (T)"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
+        <button class="icon-btn" id="menu-mute" title="Mute (M)"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg></button>
+      </div>
+    </div>
+    <div class="menu-hero">
+      <div class="hero-cat" id="hero-player"></div>
+      <div class="hero-vs">VS</div>
+      <div class="hero-cat enemy" id="hero-enemy"></div>
+    </div>
+    <h1 class="title">CAT <span>vs</span> CAT</h1>
+    <p class="subtitle">Sound Battle — shout to fight! <svg class="ic" aria-hidden="true"><use href="#i-paw"/></svg></p>
+    <div class="menu-buttons">
+      <button class="btn btn-primary" id="btn-play"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>FIGHT</button>
+      <button class="btn" id="btn-shop"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg>SKIN SHOP</button>
+      <button class="btn btn-ghost" id="btn-reset"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg>Reset progress</button>
+    </div>
+    <p class="menu-hint" id="menu-progress">Level 1 / 10</p>
+  </section>
+
+  <!-- ============ SHOP ============ -->
+  <section class="screen" id="screen-shop">
+    <header class="topbar">
+      <button class="icon-btn" id="shop-back" title="Back"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+      <h2>Skin Shop</h2>
+      <button class="icon-btn" id="shop-theme" title="Dark / Light (T)"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
+      <div class="coin-pill"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> <span id="shop-coins">0</span></div>
+    </header>
+    <div class="shop-grid" id="shop-grid"></div>
+  </section>
+
+  <!-- ============ MIC SETUP ============ -->
+  <section class="screen" id="screen-mic">
+    <div class="panel">
+      <div class="panel-icon accent-cyan"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></div>
+      <h2>Enable Your Microphone</h2>
+      <p class="panel-text">
+        Cat vs Cat listens to your voice. The <b>louder you meow</b>, the harder you push!
+        Your audio never leaves this device.
+      </p>
+      <button class="btn btn-primary" id="btn-enable-mic"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg>Enable Microphone</button>
+      <div class="divider"><span>or</span></div>
+      <button class="btn" id="btn-use-keyboard"><svg class="ic" aria-hidden="true"><use href="#i-keyboard"/></svg>Use Keyboard (quiet mode)</button>
+      <p class="panel-note">
+        Microphone needs a secure page. If it fails, open the game at
+        <code>http://localhost</code> instead of double-clicking the file.
+      </p>
+      <div class="panel-msg" id="mic-msg"></div>
+    </div>
+    <button class="icon-btn back-corner" id="mic-back" title="Back"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+  </section>
+
+  <!-- ============ CALIBRATE ============ -->
+  <section class="screen" id="screen-calibrate">
+    <div class="panel">
+      <div class="panel-icon accent-amber"><svg class="ic" aria-hidden="true"><use href="#i-micoff"/></svg></div>
+      <h2>Stay quiet…</h2>
+      <p class="panel-text">Measuring your room's background noise.<br>Don't make a sound for a moment.</p>
+      <div class="calib-ring"><span id="calib-ring-inner"></span><span id="calib-count">3</span></div>
+      <p class="panel-note">This sets your noise floor so the cats don't fight on their own.</p>
+    </div>
+  </section>
+
+  <!-- ============ BATTLE ============ -->
+  <section class="screen" id="screen-battle">
+    <div class="battle-hud">
+      <div class="fighter">
+        <div class="fighter-name" id="p-name">You</div>
+        <div class="hpbar"><div class="hp-fill" id="p-hp"></div><span class="hp-text" id="p-hptext">100</span></div>
+      </div>
+      <div class="lvl-pill" id="lvl-pill">LV 1</div>
+      <div class="fighter right">
+        <div class="fighter-name" id="e-name">Enemy</div>
+        <div class="hpbar"><div class="hp-fill enemy" id="e-hp"></div><span class="hp-text" id="e-hptext">100</span></div>
+      </div>
+    </div>
+
+    <div class="arena">
+      <div class="cat-wrap player" id="p-cat"></div>
+      <div class="arena-center"><div class="vs-glow">VS</div></div>
+      <div class="cat-wrap enemy" id="e-cat"></div>
+      <div class="fx-layer" id="fx-layer"></div>
+    </div>
+
+    <div class="clash">
+      <div class="clash-track">
+        <div class="clash-center"></div>
+        <div class="clash-fill" id="clash-fill"></div>
+        <div class="clash-marker" id="clash-marker"></div>
+      </div>
+      <div class="clash-label" id="clash-label">PUSH!</div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl-row">
+        <span class="ctl-label"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg>Sound</span>
+        <div class="micbar"><div class="mic-fill" id="mic-fill"></div></div>
+      </div>
+      <div class="ctl-row">
+        <span class="ctl-label">Special</span>
+        <div class="specialbar" id="specialbar">
+          <div class="special-fill" id="special-fill"></div>
+          <span class="special-text" id="special-text">CHARGING…</span>
+        </div>
+        <button class="btn-special" id="btn-special" disabled>MEGA&nbsp;MEOW</button>
+      </div>
+      <div class="ctl-row small">
+        <span class="ctl-label">Sensitivity</span>
+        <input type="range" id="sensitivity" min="1" max="100" value="55">
+        <button class="icon-btn" id="battle-mute" title="Mute (M)"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg></button>
+        <button class="icon-btn" id="btn-pause" title="Pause (P)"><svg class="ic" aria-hidden="true"><use href="#i-pause"/></svg></button>
+      </div>
+    </div>
+
+    <div class="overlay" id="pause-overlay">
+      <h2>Paused</h2>
+      <button class="btn btn-primary" id="btn-resume"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>Resume</button>
+      <button class="btn btn-ghost" id="btn-quit"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>Quit to menu</button>
+    </div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section class="screen" id="screen-result">
+    <div class="panel">
+      <div class="panel-icon accent-amber" id="result-icon"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg></div>
+      <h2 id="result-title">You win!</h2>
+      <p class="panel-text" id="result-text">Level cleared.</p>
+      <div class="result-coins" id="result-coins"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg>+0</div>
+      <button class="btn btn-primary" id="btn-next"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>Next level</button>
+      <button class="btn" id="btn-retry" hidden><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg>Try again</button>
+      <button class="btn btn-ghost" id="btn-menu"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>Main menu</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="game.js"></script>
+</body>
+</html>
