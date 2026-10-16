@@ -38,6 +38,7 @@ try{
     <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8.6l4.3 3.6L12 5.1l4.7 7.1L21 8.6V19H3z" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.6l4.6 4.6L19 7"/></symbol>
     <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 4l1.8 5.3L19 11l-5.2 1.7L12 18l-1.8-5.3L5 11l5.2-1.7z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6l1.5 2.6 3-.6 .6 3 2.6 1.5-1.7 2.5 1.7 2.5-2.6 1.5-.6 3-3-.6L12 21.4l-1.5-2.6-3 .6-.6-3-2.6-1.5 1.7-2.5-1.7-2.5 2.6-1.5.6-3 3 .6z"/></symbol>
   </defs>
 </svg>
 
@@ -48,6 +49,7 @@ try{
     <div class="menu-top">
       <div class="coin-pill" id="menu-coins"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> <span>0</span></div>
       <div class="top-actions">
+        <button class="icon-btn" id="menu-settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg></button>
         <button class="icon-btn" id="menu-theme" title="Dark / Light (T)"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
         <button class="icon-btn" id="menu-mute" title="Mute (M)"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg></button>
       </div>
@@ -64,7 +66,7 @@ try{
       <button class="btn" id="btn-shop"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg>SKIN SHOP</button>
       <button class="btn btn-ghost" id="btn-reset"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg>Reset progress</button>
     </div>
-    <p class="menu-hint" id="menu-progress">Level 1 / 10</p>
+    <p class="menu-hint" id="menu-progress">Level 1 / 17</p>
   </section>
 
   <!-- ============ SHOP ============ -->
@@ -76,6 +78,27 @@ try{
       <div class="coin-pill"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> <span id="shop-coins">0</span></div>
     </header>
     <div class="shop-grid" id="shop-grid"></div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="screen" id="screen-settings">
+    <div class="panel">
+      <div class="panel-icon accent-cyan"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg></div>
+      <h2>Settings</h2>
+      <div class="settings-row">
+        <span class="ctl-label"><svg class="ic" aria-hidden="true"><use href="#i-paw"/></svg>Cat voices</span>
+        <input type="range" id="vol-cat" min="0" max="100" value="85">
+        <span class="settings-val" id="vol-cat-val">85%</span>
+      </div>
+      <div class="settings-row">
+        <span class="ctl-label"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg>Effects</span>
+        <input type="range" id="vol-fx" min="0" max="100" value="25">
+        <span class="settings-val" id="vol-fx-val">25%</span>
+      </div>
+      <button class="btn" id="settings-mute"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg>Sound on</button>
+      <p class="panel-note">Cat voices are the real meows. Effects are the hits, hisses and chimes.</p>
+    </div>
+    <button class="icon-btn back-corner" id="settings-back" title="Back"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
   </section>
 
   <!-- ============ MIC SETUP ============ -->
@@ -152,6 +175,9 @@ try{
           <span class="special-text" id="special-text">CHARGING…</span>
         </div>
         <button class="btn-special" id="btn-special" disabled>MEGA&nbsp;MEOW</button>
+      </div>
+      <div class="ctl-row shout-row">
+        <button class="btn btn-primary btn-shout" id="btn-shout"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg>HOLD&nbsp;TO&nbsp;SHOUT</button>
       </div>
       <div class="ctl-row small">
         <span class="ctl-label">Sensitivity</span>

@@ -13,32 +13,60 @@ const rand  = (a, b) => a + Math.random() * (b - a);
 /* inline sprite icon reference */
 const icon = name => `<svg class="ic" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
 
-/* ---------------- data: skins ---------------- */
+/* ---------------- data: skins ----------------
+   voice = the real meow file this cat uses as the player; vrate = its pitch
+   (tuned so each skin sounds distinct from the enemy's version of the file). */
 const SKINS = [
-  { id:'shadow',   name:'Shadow',        price:0,   fur:'#6b7280', belly:'#e5e7eb', eye:'#34d399', patch:'#4b5563', pattern:'none',    accessory:null,      accColor:'#ef4444' },
-  { id:'tabby',    name:'Sunny Tabby',    price:100, fur:'#f59e0b', belly:'#fff7ed', eye:'#a16207', patch:'#d97706', pattern:'stripes', accessory:null,      accColor:'#ef4444' },
-  { id:'snowpuff', name:'Snowpuff',       price:150, fur:'#eef2f7', belly:'#ffffff', eye:'#38bdf8', patch:'#cbd5e1', pattern:'none',    accessory:null,      accColor:'#ef4444' },
-  { id:'tuxedo',   name:'Sir Tuxedo',     price:200, fur:'#111827', belly:'#f9fafb', eye:'#eab308', patch:'#f9fafb', pattern:'tuxedo',  accessory:null,      accColor:'#ef4444' },
-  { id:'calico',   name:'Calico Crazy',   price:250, fur:'#fb923c', belly:'#fff7ed', eye:'#22c55e', patch:'#1f2937', pattern:'calico',  accessory:null,      accColor:'#ef4444' },
-  { id:'siamese',  name:'Mister Siamese', price:300, fur:'#fde68a', belly:'#fffbeb', eye:'#2563eb', patch:'#a16207', pattern:'points',  accessory:null,      accColor:'#ef4444' },
-  { id:'ninja',    name:'Ninja Neko',     price:400, fur:'#1f2937', belly:'#374151', eye:'#ef4444', patch:'#0f172a', pattern:'none',    accessory:'bandana', accColor:'#dc2626' },
-  { id:'wizard',   name:'Wizard Whiskers',price:500, fur:'#7c3aed', belly:'#ede9fe', eye:'#facc15', patch:'#fde047', pattern:'stars',   accessory:'hat',     accColor:'#6d28d9' },
-  { id:'king',     name:'King Whiskers',  price:800, fur:'#fbbf24', belly:'#fef3c7', eye:'#b45309', patch:'#f59e0b', pattern:'none',    accessory:'crown',   accColor:'#f59e0b' },
+  { id:'shadow',    name:'Shadow',          price:0,    fur:'#6b7280', belly:'#e5e7eb', eye:'#34d399', patch:'#4b5563', pattern:'none',    accessory:null,      accColor:'#ef4444', voice:'sounds/dragon-studio-cat-meow-401729.mp3',                          vrate:1.12 },
+  { id:'mittens',   name:'Mittens',         price:60,   fur:'#9aa4b2', belly:'#f8fafc', eye:'#f59e0b', patch:'#cbd5e1', pattern:'socks',   accessory:null,      accColor:'#ef4444', voice:'sounds/stu9-cute-cat-352656.mp3',                                  vrate:1.30 },
+  { id:'tabby',     name:'Sunny Tabby',     price:100,  fur:'#f59e0b', belly:'#fff7ed', eye:'#a16207', patch:'#d97706', pattern:'stripes', accessory:null,      accColor:'#ef4444', voice:'sounds/stu9-cute-cat-352656.mp3',                                  vrate:1.18 },
+  { id:'cookie',    name:'Cookie',          price:120,  fur:'#a9713f', belly:'#f6e7d3', eye:'#22c55e', patch:'#4a2f1b', pattern:'spots',   accessory:null,      accColor:'#ef4444', voice:'sounds/dragon-studio-cute-cat-meow-472372.mp3',                    vrate:1.08 },
+  { id:'snowpuff',  name:'Snowpuff',        price:150,  fur:'#eef2f7', belly:'#ffffff', eye:'#38bdf8', patch:'#cbd5e1', pattern:'none',    accessory:null,      accColor:'#ef4444', voice:'sounds/virtual_vibes-cute-cat-meow-400946.mp3',                    vrate:1.25 },
+  { id:'tuxedo',    name:'Sir Tuxedo',      price:200,  fur:'#111827', belly:'#f9fafb', eye:'#eab308', patch:'#f9fafb', pattern:'tuxedo',  accessory:null,      accColor:'#ef4444', voice:'sounds/ribhavagrawal-cat-meowing-type-02-293290.mp3',              vrate:0.95 },
+  { id:'calico',    name:'Calico Crazy',    price:250,  fur:'#fb923c', belly:'#fff7ed', eye:'#22c55e', patch:'#1f2937', pattern:'calico',  accessory:null,      accColor:'#ef4444', voice:'sounds/dragon-studio-cute-cat-meow-472372.mp3',                    vrate:1.20 },
+  { id:'siamese',   name:'Mister Siamese',  price:300,  fur:'#fde68a', belly:'#fffbeb', eye:'#2563eb', patch:'#a16207', pattern:'points',  accessory:null,      accColor:'#ef4444', voice:'sounds/freesound_community-cat-meow-14536.mp3',                    vrate:1.10 },
+  { id:'pepper',    name:'Pepper',          price:350,  fur:'#4b5563', belly:'#e5e7eb', eye:'#f97316', patch:'#1f2937', pattern:'stripes', accessory:'scarf',   accColor:'#dc2626', voice:'sounds/tanweraman-angry-cat-hq-sound-effect-240675.mp3',           vrate:0.98 },
+  { id:'ninja',     name:'Ninja Neko',      price:400,  fur:'#1f2937', belly:'#374151', eye:'#ef4444', patch:'#0f172a', pattern:'none',    accessory:'bandana', accColor:'#dc2626', voice:'sounds/alex_jauk-annoyed-cat-meows-angrily-438006.mp3',            vrate:1.05 },
+  { id:'wizard',    name:'Wizard Whiskers', price:500,  fur:'#7c3aed', belly:'#ede9fe', eye:'#facc15', patch:'#fde047', pattern:'stars',   accessory:'hat',     accColor:'#6d28d9', voice:'sounds/virtual_vibes-cat-meow-sound-383823.mp3',                   vrate:1.15 },
+  { id:'boba',      name:'Boba',            price:600,  fur:'#f0abfc', belly:'#fdf2f8', eye:'#7c3aed', patch:'#a21caf', pattern:'heart',   accessory:'bow',     accColor:'#db2777', voice:'sounds/virtual_vibes-cute-cat-meow-400946.mp3',                    vrate:1.22 },
+  { id:'king',      name:'King Whiskers',   price:800,  fur:'#fbbf24', belly:'#fef3c7', eye:'#b45309', patch:'#f59e0b', pattern:'none',    accessory:'crown',   accColor:'#f59e0b', voice:'sounds/poorartistt-angry-cat-sound-effect-no-copyright-405796.mp3', vrate:0.90 },
+  { id:'professor', name:'Professor Paws',  price:1000, fur:'#374151', belly:'#f9fafb', eye:'#0ea5e9', patch:'#f9fafb', pattern:'tuxedo',  accessory:'shades',  accColor:'#111827', voice:'sounds/alex_jauk-annoyed-cat-meows-angrily-438006.mp3',            vrate:1.02 },
+  { id:'cosmic',    name:'Cosmic Neko',     price:1200, fur:'#1e1b4b', belly:'#c7d2fe', eye:'#facc15', patch:'#fde047', pattern:'stars',   accessory:'halo',    accColor:'#fde047', voice:'sounds/freesound_community-cat-meow-14536.mp3',                    vrate:1.28 },
+  { id:'captain',   name:'Cap\u2019n Whiskers', price:1500, fur:'#fde68a', belly:'#fffbeb', eye:'#1d4ed8', patch:'#a16207', pattern:'points', accessory:'pirate',  accColor:'#111827', voice:'sounds/poorartistt-angry-cat-sound-effect-no-copyright-405796.mp3', vrate:0.84 },
 ];
 const skinById = id => SKINS.find(s => s.id === id) || SKINS[0];
+/* the equipped cat's real voice + pitch (used whenever your cat shouts) */
+function playerVoice(){
+  const s = skinById(save.equipped);
+  return { src:s.voice, rate:s.vrate || 1 };
+}
+function playerMeow(opts){
+  const v = playerVoice();
+  Meows.play(v.src, Object.assign({ rate:v.rate, synth:() => SFX.meow() }, opts || {}));
+}
 
-/* ---------------- data: levels (10) ---------------- */
+/* ---------------- data: levels (17) ----------------
+   hits → enemy HP (× HP_PER_HIT) · push → its loudness · dmg → damage it deals
+   phase → roar rhythm offset · snd → its meow file · rate → its base pitch */
 const LEVELS = [
-  { name:'Scared Kitten',   skin:'snowpuff', hits:4,  push:0.26, dmg:7,  phase:0.4, snd:'sounds/stu9-cute-cat-352656.mp3' },
-  { name:'Sunny Tom',       skin:'tabby',    hits:5,  push:0.30, dmg:8,  phase:1.3, snd:'sounds/dragon-studio-cute-cat-meow-472372.mp3' },
-  { name:'Alley Shadow',    skin:'shadow',   hits:5,  push:0.34, dmg:9,  phase:2.2, snd:'sounds/dragon-studio-cat-meow-401729.mp3' },
-  { name:'Calico Crazy',    skin:'calico',   hits:6,  push:0.39, dmg:10, phase:0.9, snd:'sounds/virtual_vibes-cute-cat-meow-400946.mp3' },
-  { name:'Duke Tuxedo',     skin:'tuxedo',   hits:6,  push:0.44, dmg:11, phase:3.0, snd:'sounds/ribhavagrawal-cat-meowing-type-02-293290.mp3' },
-  { name:'Mister Siamese',  skin:'siamese',  hits:7,  push:0.49, dmg:12, phase:1.7, snd:'sounds/virtual_vibes-cat-meow-sound-383823.mp3' },
-  { name:'Ninja Neko',      skin:'ninja',    hits:7,  push:0.53, dmg:13, phase:2.6, snd:'sounds/alex_jauk-annoyed-cat-meows-angrily-438006.mp3' },
-  { name:'Wizard Whiskers', skin:'wizard',   hits:8,  push:0.57, dmg:14, phase:0.2, snd:'sounds/freesound_community-cat-meow-14536.mp3' },
-  { name:'Shadowfang',      skin:'shadow',   hits:9,  push:0.60, dmg:16, phase:1.1, snd:'sounds/tanweraman-angry-cat-hq-sound-effect-240675.mp3' },
-  { name:'King Whiskers',   skin:'king',    hits:10, push:0.64, dmg:18, phase:2.9, snd:'sounds/poorartistt-angry-cat-sound-effect-no-copyright-405796.mp3' },
+  { name:'Scared Kitten',    skin:'snowpuff',  hits:4,  push:0.26, dmg:7,  phase:0.4, snd:'sounds/stu9-cute-cat-352656.mp3' },
+  { name:'Sunny Tom',        skin:'tabby',     hits:5,  push:0.30, dmg:8,  phase:1.3, snd:'sounds/dragon-studio-cute-cat-meow-472372.mp3' },
+  { name:'Alley Shadow',     skin:'shadow',    hits:5,  push:0.34, dmg:9,  phase:2.2, snd:'sounds/dragon-studio-cat-meow-401729.mp3' },
+  { name:'Calico Crazy',     skin:'calico',    hits:6,  push:0.39, dmg:10, phase:0.9, snd:'sounds/virtual_vibes-cute-cat-meow-400946.mp3' },
+  { name:'Duke Tuxedo',      skin:'tuxedo',    hits:6,  push:0.44, dmg:11, phase:3.0, snd:'sounds/ribhavagrawal-cat-meowing-type-02-293290.mp3' },
+  { name:'Mister Siamese',   skin:'siamese',   hits:7,  push:0.49, dmg:12, phase:1.7, snd:'sounds/virtual_vibes-cat-meow-sound-383823.mp3' },
+  { name:'Ninja Neko',       skin:'ninja',     hits:7,  push:0.53, dmg:13, phase:2.6, snd:'sounds/alex_jauk-annoyed-cat-meows-angrily-438006.mp3' },
+  { name:'Wizard Whiskers',  skin:'wizard',    hits:8,  push:0.57, dmg:14, phase:0.2, snd:'sounds/freesound_community-cat-meow-14536.mp3' },
+  { name:'Shadowfang',       skin:'shadow',    hits:9,  push:0.60, dmg:16, phase:1.1, snd:'sounds/tanweraman-angry-cat-hq-sound-effect-240675.mp3' },
+  { name:'King Whiskers',    skin:'king',      hits:10, push:0.64, dmg:18, phase:2.9, snd:'sounds/poorartistt-angry-cat-sound-effect-no-copyright-405796.mp3' },
+  /* --- harder set: appended after the original 10 --- */
+  { name:'Mittens the Merciless', skin:'mittens',   hits:10, push:0.66, dmg:19, phase:1.5, snd:'sounds/virtual_vibes-cute-cat-meow-400946.mp3',              rate:1.15 },
+  { name:'Cookie Crusher',        skin:'cookie',    hits:11, push:0.68, dmg:20, phase:2.4, snd:'sounds/ribhavagrawal-cat-meowing-type-02-293290.mp3',         rate:0.92 },
+  { name:'Pepper Puncher',        skin:'pepper',    hits:11, push:0.70, dmg:21, phase:0.7, snd:'sounds/alex_jauk-annoyed-cat-meows-angrily-438006.mp3',       rate:1.10 },
+  { name:'Boba Brawler',          skin:'boba',      hits:12, push:0.72, dmg:22, phase:3.2, snd:'sounds/tanweraman-angry-cat-hq-sound-effect-240675.mp3',      rate:1.05 },
+  { name:'Professor Claws',       skin:'professor', hits:12, push:0.74, dmg:22, phase:1.9, snd:'sounds/freesound_community-cat-meow-14536.mp3',               rate:0.95 },
+  { name:'Cosmic Cataclysm',      skin:'cosmic',    hits:13, push:0.77, dmg:23, phase:2.7, snd:'sounds/virtual_vibes-cat-meow-sound-383823.mp3',              rate:1.20 },
+  { name:'Cap\u2019n Chaos',      skin:'captain',   hits:14, push:0.80, dmg:25, phase:0.3, snd:'sounds/poorartistt-angry-cat-sound-effect-no-copyright-405796.mp3', rate:0.88 },
 ];
 const HP_PER_HIT = 20;       // enemy max hp = hits * HP_PER_HIT
 const PLAYER_MAX = 100;
@@ -48,7 +76,7 @@ const SPECIAL_GAIN = 12;     // charge per second at full loudness
 
 /* ---------------- save ---------------- */
 const SAVE_KEY = 'catvscat.save.v1';
-const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark' };
+const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25 };
 let save = loadSave();
 function loadSave(){
   try{ return Object.assign({}, DEFAULT_SAVE, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); }
@@ -78,7 +106,8 @@ function getNoise(ctx){
 
 const SFX = {
   muted: save.muted,
-  vol: 0.25,   // effect level — sits under the real cat voices
+  /* effect level — live from Settings (0..1) */
+  get vol(){ return save.volFx; },
   tone(freq, dur, type, vol, slideTo){
     if(this.muted) return;
     try{
@@ -230,8 +259,9 @@ const SFX = {
     }catch(e){}
   },
   hit(){ this.tone(180, 0.22, 'sine', 0.22, 60); this.noise(0.14, 0.18, 500); },
+  /* the charging power behind MEGA MEOW — the cry itself is the
+     player's real voice (playerMeow) layered on top */
   special(){
-    this.catMeow(1.15, 0.7, 0.55, 'meow');
     this.tone(170, 0.5, 'sawtooth', 0.1, 1500);
     this.noise(0.5, 0.09, 1800);
   },
@@ -267,23 +297,26 @@ const Meows = {
     return p;
   },
   preload(src){ if(src) this.load(src).catch(() => {}); },
-  play(src, vol){
+  /* opts: { vol:0..1 (× the Cat-volumes slider), rate:base pitch, vary:bool, synth:fn fallback } */
+  play(src, opts){
     if(SFX.muted || !src) return;
+    opts = opts || {};
     const ctx = getAudioCtx();
     if(ctx.state === 'suspended') ctx.resume();   // browser autoplay safety
     if(this.active && this.active.src === src && this.active.until > ctx.currentTime + 0.1) return; // previous shout still playing
+    const rate = opts.rate || 1;
     this.load(src).then(buf => {
       if(SFX.muted) return;
       const ctx = getAudioCtx();
-      const srcNode = ctx.createBufferSource();
-      srcNode.buffer = buf;
-      srcNode.playbackRate.value = rand(0.94, 1.06);   // slight variation each shout
+      const node = ctx.createBufferSource();
+      node.buffer = buf;
+      node.playbackRate.value = rate * (opts.vary === false ? 1 : rand(0.94, 1.06));   // slight variation each shout
       const g = ctx.createGain();
-      g.gain.value = vol || 0.85;
-      srcNode.connect(g).connect(ctx.destination);
-      srcNode.start();
-      this.active = { src, until: ctx.currentTime + buf.duration / srcNode.playbackRate.value };
-    }).catch(() => { if(!SFX.muted) SFX.enemyMeow(); });   // synth fallback
+      g.gain.value = clamp((opts.vol == null ? 1 : opts.vol) * save.volCat, 0, 1);
+      node.connect(g).connect(ctx.destination);
+      node.start();
+      this.active = { src, until: ctx.currentTime + buf.duration / node.playbackRate.value };
+    }).catch(() => { if(!SFX.muted) (opts.synth || (() => SFX.enemyMeow()))(); });   // synth fallback
   },
 };
 
@@ -354,6 +387,14 @@ function buildCatSVG(skin){
     <path d="M70 168 l4 9 10 1 -7 7 2 10 -9 -5 -9 5 2 -10 -7 -7 10 -1 z"/>
     <path d="M132 190 l3 7 8 1 -6 5 2 8 -7 -4 -7 4 2 -8 -6 -5 8 -1 z"/>
   </g>
+  <g class="pat pat-spots" fill="var(--patch)" opacity=".9">
+    <ellipse cx="68"  cy="172" rx="16" ry="14"/>
+    <ellipse cx="120" cy="204" rx="13" ry="11"/>
+    <ellipse cx="150" cy="180" rx="11" ry="9"/>
+  </g>
+  <g class="pat pat-heart" fill="var(--patch)" opacity=".95">
+    <path d="M112 166 c-15 -13 -30 -4 -30 10 c0 13 17 21 30 30 c13 -9 30 -17 30 -30 c0 -14 -15 -23 -30 -10 z"/>
+  </g>
 
   <!-- paws -->
   <ellipse cx="70"  cy="220" rx="21" ry="14" fill="var(--fur)"/>
@@ -362,6 +403,11 @@ function buildCatSVG(skin){
   <ellipse cx="130" cy="223" rx="12" ry="8" fill="var(--belly)"/>
   <g class="pat pat-points" fill="var(--patch)" opacity=".85">
     <ellipse cx="70" cy="220" rx="21" ry="12"/><ellipse cx="130" cy="220" rx="21" ry="12"/>
+  </g>
+  <g class="pat pat-socks" fill="var(--belly)">
+    <ellipse cx="70"  cy="221" rx="18" ry="12"/>
+    <ellipse cx="130" cy="221" rx="18" ry="12"/>
+    <path d="M112 150 q-24 6 -24 38 q0 20 24 22 q24 -2 24 -22 q0 -32 -24 -38 z"/>
   </g>
 
   <!-- head -->
@@ -375,6 +421,10 @@ function buildCatSVG(skin){
     <path d="M70 60 L56 8 L88 38 Z" opacity=".9"/>
     <path d="M154 60 L168 8 L136 38 Z" opacity=".9"/>
     <ellipse cx="112" cy="86" rx="36" ry="30"/>
+  </g>
+  <g class="pat pat-spots" fill="var(--patch)" opacity=".9">
+    <ellipse cx="142" cy="70" rx="14" ry="12"/>
+    <ellipse cx="68"  cy="110" rx="9" ry="7"/>
   </g>
 
   <!-- muzzle -->
@@ -421,6 +471,32 @@ function buildCatSVG(skin){
     <circle cx="86" cy="30" r="2.6" fill="#38bdf8"/>
     <circle cx="138" cy="30" r="2.6" fill="#38bdf8"/>
   </g>
+  <g class="acc acc-scarf">
+    <path d="M60 146 q52 22 104 0 l0 15 q-52 22 -104 0 z" fill="var(--acc)"/>
+    <path d="M136 158 l14 40 l-30 -10 z" fill="var(--acc)"/>
+    <path d="M64 153 q48 20 96 0" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/>
+  </g>
+  <g class="acc acc-bow" fill="var(--acc)">
+    <path d="M112 150 l-30 -14 v28 z"/>
+    <path d="M112 150 l30 -14 v28 z"/>
+    <circle cx="112" cy="150" r="7"/>
+  </g>
+  <g class="acc acc-shades">
+    <rect x="72"  y="79" width="34" height="19" rx="6" fill="var(--acc)"/>
+    <rect x="118" y="79" width="34" height="19" rx="6" fill="var(--acc)"/>
+    <path d="M106 88 h12" stroke="var(--acc)" stroke-width="4"/>
+    <path d="M72 86 h-14 M152 86 h14" stroke="var(--acc)" stroke-width="4"/>
+  </g>
+  <g class="acc acc-halo">
+    <ellipse cx="112" cy="16" rx="40" ry="11" fill="none" stroke="var(--acc)" stroke-width="6"/>
+    <ellipse cx="112" cy="16" rx="40" ry="11" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2"/>
+  </g>
+  <g class="acc acc-pirate">
+    <path d="M112 0 q34 20 46 44 q-46 -16 -92 0 q12 -24 46 -44 z" fill="var(--acc)"/>
+    <path d="M62 46 q50 16 100 0 q-8 14 -50 14 q-42 0 -50 -14 z" fill="var(--acc)"/>
+    <path d="M74 80 h30 a15 15 0 0 1 -30 0 z" fill="#111827"/>
+    <path d="M74 80 q-18 -8 -24 -24" stroke="#111827" stroke-width="3" fill="none"/>
+  </g>
 </svg>`;
 }
 
@@ -429,7 +505,7 @@ function mountCat(host, skin){
 }
 
 /* ---------------- screens ---------------- */
-const SCREENS = ['menu','shop','mic','calibrate','battle','result'];
+const SCREENS = ['menu','shop','settings','mic','calibrate','battle','result'];
 function show(name){
   SCREENS.forEach(s => $('#screen-' + s).classList.toggle('active', s === name));
 }
@@ -489,11 +565,11 @@ $('#shop-grid').addEventListener('click', e => {
 /* ---------------- heroes on menu ---------------- */
 function refreshHeroes(){
   mountCat($('#hero-player'), skinById(save.equipped));
-  mountCat($('#hero-enemy'),  skinById(LEVELS[Math.min(save.bestLevel, 10) - 1].skin));
+  mountCat($('#hero-enemy'),  skinById(LEVELS[Math.min(save.bestLevel, LEVELS.length) - 1].skin));
   $('#menu-coins').querySelector('span').textContent = save.coins;
-  $('#menu-progress').innerHTML = save.bestLevel > 10
+  $('#menu-progress').innerHTML = save.bestLevel > LEVELS.length
     ? 'You beat the game! ' + icon('crown')
-    : `Level ${save.bestLevel} / 10 · ${icon('coin')} ${save.coins}`;
+    : `Level ${save.bestLevel} / ${LEVELS.length} · ${icon('coin')} ${save.coins}`;
 }
 
 /* ---------------- game state ---------------- */
@@ -503,6 +579,7 @@ const G = {
   meter:0, special:0, specialReady:false,
   myLevel:0, enemyLevelVal:0, t:0, lastT:0,
   shake:0, lastMeow:0, lastGrowl:0,
+  scared:false, lastWhimper:0,
   keyboardMode:false, result:'',
 };
 const Keys = { shout:false };
@@ -511,7 +588,8 @@ function sensitivityVal(){ return save.sensitivity / 100; }
 
 /* raw player loudness 0..1 */
 function readPlayerRaw(dt){
-  if(G.keyboardMode) return Keys.shout ? 1 : 0;
+  if(Keys.shout) return 1;          // SPACE (quiet mode) or the on-screen SHOUT button
+  if(G.keyboardMode) return 0;      // quiet mode: only the key/button roars
   const rms = Mic.readRms();
   const floor = Math.max(Mic.noiseFloor, 0.004);
   const sens = sensitivityVal();
@@ -538,20 +616,24 @@ function startBattle(level){
   G.meter = 0; G.special = 0; G.specialReady = false;
   G.myLevel = 0; G.enemyLevelVal = 0; G.t = 0; G.shake = 0;
   G.lastMeow = -1; G.lastGrowl = -1;   // reset voice throttles so every fight makes sound
+  G.scared = false; G.lastWhimper = 0;
   G.paused = false; G.running = true;
   G.result = '';
 
   mountCat($('#p-cat'), skinById(save.equipped));
   mountCat($('#e-cat'), skinById(L.skin));
   Meows.preload(L.snd);   // have the enemy's voice ready before the first shout
+  Meows.preload(playerVoice().src);   // …and yours
   $('#p-name').textContent = 'You';
   $('#e-name').innerHTML = (level === LEVELS.length ? icon('crown') + ' ' : '') + L.name;
-  $('#lvl-pill').textContent = 'LV ' + level + ' / 10';
+  $('#lvl-pill').textContent = 'LV ' + level + ' / ' + LEVELS.length;
   $('#pause-overlay').classList.remove('show');
   updateHP();
   show('battle');
   G.lastT = performance.now();
   requestAnimationFrame(loop);
+  /* intro taunt — the rival roars once as the fight begins */
+  setTimeout(() => { if(G.running && !G.paused) Meows.play(L.snd, { rate:L.rate, vol:0.9, vary:false }); }, 450);
 }
 
 function updateHP(){
@@ -614,7 +696,7 @@ function landHit(byPlayer){
     G.shake = 12;
     flash('player', 'attacking', 400);
     flash('enemy', 'hurt', 360);
-    spawnFx('enemy', '-' + dmg, '#fbbf24');
+    spawnFx('enemy', '-' + dmg, '#ffffff');
     SFX.hit();
   } else {
     G.playerHP -= L.dmg;
@@ -622,8 +704,8 @@ function landHit(byPlayer){
     G.shake = 14;
     flash('enemy', 'attacking', 400);
     flash('player', 'hurt', 360);
-    spawnFx('player', '-' + L.dmg, '#ff4d9d');
-    Meows.play(L.snd, 0.7);   // the enemy's own attack cry
+    spawnFx('player', '-' + L.dmg, '#c9c9c9');
+    Meows.play(L.snd, { rate:L.rate, vol:0.7 });   // the enemy's own attack cry
     SFX.hiss();
   }
   updateHP();
@@ -641,7 +723,8 @@ function useSpecial(){
   G.shake = 22;
   flash('player', 'attacking', 460);
   flash('enemy', 'hurt', 460);
-  spawnFx('enemy', 'MEGA! -' + dmg, '#ff4d9d');
+  spawnFx('enemy', 'MEGA! -' + dmg, '#ffffff');
+  playerMeow({ vol:1.15, vary:false });   // the mega cry — your cat's real voice
   SFX.special();
   updateHP();
   if(G.enemyHP <= 0) endBattle(true);
@@ -666,7 +749,9 @@ function updateBattle(dt){
   G.myLevel += (target - G.myLevel) * (target > G.myLevel ? 0.55 : 0.16);
   G.myLevel = clamp(G.myLevel, 0, 1);
 
-  G.enemyLevelVal = enemyRaw(G.t, L);
+  // enemy nerves: when nearly beaten they weaken and panic
+  G.scared = G.enemyHP / G.enemyMax <= 0.3;
+  G.enemyLevelVal = enemyRaw(G.t, L) * (G.scared ? 0.72 : 1);
 
   // clash meter
   const net = G.myLevel * PLAYER_POWER - G.enemyLevelVal;
@@ -684,10 +769,18 @@ function updateBattle(dt){
   if(Math.random() < G.myLevel * dt * 3) G.shake = Math.max(G.shake, 4);
 
   // sfx throttled
-  if(G.myLevel > 0.35 && G.t - G.lastMeow > 0.9){ G.lastMeow = G.t; SFX.meow(); }
+  if(G.myLevel > 0.35 && G.t - G.lastMeow > 0.9){ G.lastMeow = G.t; playerMeow(); }
   // enemy voice gate scales with their strength, so even weak early cats keep vocalizing
   const voiceGate = Math.min(0.35, L.push * 0.6);
-  if(G.enemyLevelVal > voiceGate && G.t - G.lastGrowl > 1.1){ G.lastGrowl = G.t; Meows.play(L.snd); }
+  if(G.scared){
+    // frightened: quieter, higher whimpers instead of the usual shout
+    if(G.t - G.lastWhimper > 2.0 && Math.random() < 0.5){
+      G.lastWhimper = G.t;
+      Meows.play(L.snd, { rate:(L.rate || 1) * 1.35, vol:0.6, vary:false });
+    }
+  } else if(G.enemyLevelVal > voiceGate && G.t - G.lastGrowl > 1.1){
+    G.lastGrowl = G.t; Meows.play(L.snd, { rate:L.rate });
+  }
 
   render();
 }
@@ -719,9 +812,13 @@ function render(){
     fill.classList.add('bad');
   }
   marker.style.left = (50 + m / 2) + '%';
-  if(m > 55){ label.textContent = 'PUSH! HIT THEM!'; label.className = 'clash-label hot'; }
-  else if(m < -55){ label.textContent = 'DANGER! SHOUT!'; label.className = 'clash-label bad'; }
+  if(m < -55){ label.textContent = 'DANGER! SHOUT!'; label.className = 'clash-label bad'; }
+  else if(G.scared){ label.textContent = "THEY'RE WEAKENING!"; label.className = 'clash-label hot'; }
+  else if(m > 55){ label.textContent = 'PUSH! HIT THEM!'; label.className = 'clash-label hot'; }
   else { label.textContent = 'PUSH!'; label.className = 'clash-label'; }
+
+  // enemy looks rattled when nearly beaten
+  $('#e-cat').classList.toggle('scared', G.scared);
 
   // screen shake
   const arena = $('.arena');
@@ -747,14 +844,18 @@ function endBattle(won){
     const flawless = G.playerHP >= PLAYER_MAX ? 50 : 0;
     coins = 25 + G.level * 5 + hpKeep + flawless;
     save.coins += coins;
-    if(G.level + 1 > save.bestLevel) save.bestLevel = Math.min(11, G.level + 1);
+    if(G.level + 1 > save.bestLevel) save.bestLevel = Math.min(LEVELS.length + 1, G.level + 1);
     persist();
     SFX.win();
+    // the beaten rival whimpers as it goes down
+    setTimeout(() => Meows.play(LEVELS[G.level - 1].snd, { rate:(LEVELS[G.level - 1].rate || 1) * 1.28, vol:0.7, vary:false }), 380);
   } else {
     coins = 5;
     save.coins += coins;
     persist();
     SFX.lose();
+    // the rival's triumphant meow
+    setTimeout(() => Meows.play(LEVELS[G.level - 1].snd, { rate:(LEVELS[G.level - 1].rate || 1) * 0.95, vol:0.9, vary:false }), 380);
   }
 
   const last = G.level >= LEVELS.length;
@@ -765,7 +866,7 @@ function endBattle(won){
   if(won && last){
     rIcon.className = 'panel-icon accent-amber'; rIcon.innerHTML = icon('crown');
     title.textContent = 'YOU BEAT THE GAME!';
-    text.textContent = 'You dethroned King Whiskers. All 10 levels conquered!';
+    text.textContent = `You dethroned ${LEVELS[LEVELS.length - 1].name}. All ${LEVELS.length} levels conquered!`;
     next.hidden = true; retry.hidden = true;
   } else if(won){
     rIcon.className = 'panel-icon accent-amber'; rIcon.innerHTML = icon('trophy');
@@ -822,6 +923,20 @@ function bind(){
   $('#menu-theme').addEventListener('click', toggleTheme);
   $('#shop-theme').addEventListener('click', toggleTheme);
 
+  /* settings */
+  $('#menu-settings').addEventListener('click', () => { SFX.click(); updateSettingsUI(); show('settings'); });
+  $('#settings-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
+  $('#settings-mute').addEventListener('click', () => { toggleMute(); updateSettingsUI(); });
+  $('#vol-cat').addEventListener('input', e => {
+    save.volCat = +e.target.value / 100; persist();
+    $('#vol-cat-val').textContent = e.target.value + '%';
+  });
+  $('#vol-fx').addEventListener('input', e => {
+    save.volFx = +e.target.value / 100; persist();
+    $('#vol-fx-val').textContent = e.target.value + '%';
+  });
+  $('#vol-fx').addEventListener('change', () => SFX.click());   // little preview of the new level
+
   /* shop */
   $('#shop-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
 
@@ -860,6 +975,13 @@ function bind(){
   $('#btn-special').addEventListener('click', useSpecial);
   $('#btn-pause').addEventListener('click', pauseGame);
   $('#btn-resume').addEventListener('click', pauseGame);
+
+  /* on-screen SHOUT button (touch devices) — hold to roar */
+  const shoutBtn = $('#btn-shout');
+  const startShout = e => { e.preventDefault(); Keys.shout = true; shoutBtn.classList.add('held'); getAudioCtx(); };
+  const endShout = () => { Keys.shout = false; shoutBtn.classList.remove('held'); };
+  shoutBtn.addEventListener('pointerdown', startShout);
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => shoutBtn.addEventListener(ev, endShout));
   $('#btn-quit').addEventListener('click', () => {
     G.running = false; G.paused = false;
     $('#pause-overlay').classList.remove('show');
@@ -867,7 +989,7 @@ function bind(){
   });
 
   /* result */
-  $('#btn-next').addEventListener('click', () => { SFX.click(); startBattle(Math.min(10, G.level + 1)); });
+  $('#btn-next').addEventListener('click', () => { SFX.click(); startBattle(Math.min(LEVELS.length, G.level + 1)); });
   $('#btn-retry').addEventListener('click', () => { SFX.click(); startBattle(G.level); });
   $('#btn-menu').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
 
@@ -900,7 +1022,15 @@ function toggleMute(){
   SFX.muted = save.muted;
   persist();
   document.querySelectorAll('#menu-mute, #battle-mute').forEach(b => b.innerHTML = icon(save.muted ? 'mute' : 'sound'));
+  if(typeof updateSettingsUI === 'function') updateSettingsUI();
   if(!save.muted) SFX.click();
+}
+
+function updateSettingsUI(){
+  const cat = Math.round(save.volCat * 100), fx = Math.round(save.volFx * 100);
+  $('#vol-cat').value = cat; $('#vol-cat-val').textContent = cat + '%';
+  $('#vol-fx').value  = fx;  $('#vol-fx-val').textContent  = fx + '%';
+  $('#settings-mute').innerHTML = icon(save.muted ? 'mute' : 'sound') + (save.muted ? 'Sound off' : 'Sound on');
 }
 
 function applyTheme(){
@@ -922,6 +1052,7 @@ function boot(){
   bind();
   applyTheme();
   refreshHeroes();
+  updateSettingsUI();
   $('#menu-mute').innerHTML = icon(save.muted ? 'mute' : 'sound');
   $('#battle-mute').innerHTML = icon(save.muted ? 'mute' : 'sound');
 }
