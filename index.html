@@ -39,6 +39,8 @@ try{
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.6l4.6 4.6L19 7"/></symbol>
     <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 4l1.8 5.3L19 11l-5.2 1.7L12 18l-1.8-5.3L5 11l5.2-1.7z"/></symbol>
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6l1.5 2.6 3-.6 .6 3 2.6 1.5-1.7 2.5 1.7 2.5-2.6 1.5-.6 3-3-.6L12 21.4l-1.5-2.6-3 .6-.6-3-2.6-1.5 1.7-2.5-1.7-2.5 2.6-1.5.6-3 3 .6z"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V6l10-2.4V16"/><circle cx="6.4" cy="18" r="2.6"/><circle cx="16.4" cy="16" r="2.6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
   </defs>
 </svg>
 
@@ -49,9 +51,9 @@ try{
     <div class="menu-top">
       <div class="coin-pill" id="menu-coins"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> <span>0</span></div>
       <div class="top-actions">
-        <button class="icon-btn" id="menu-settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg></button>
-        <button class="icon-btn" id="menu-theme" title="Dark / Light (T)"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
-        <button class="icon-btn" id="menu-mute" title="Mute (M)"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg></button>
+        <button class="icon-btn" id="menu-settings" title="Settings" aria-label="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg></button>
+        <button class="icon-btn" id="menu-theme" title="Dark / Light (T)" aria-label="Toggle colour theme"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
+        <button class="icon-btn" id="menu-mute" title="Mute (M)" aria-label="Mute sound"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg></button>
       </div>
     </div>
     <div class="menu-hero">
@@ -63,6 +65,8 @@ try{
     <p class="subtitle">Sound Battle — shout to fight! <svg class="ic" aria-hidden="true"><use href="#i-paw"/></svg></p>
     <div class="menu-buttons">
       <button class="btn btn-primary" id="btn-play"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>FIGHT</button>
+      <button class="btn" id="btn-levels"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg>SELECT LEVEL</button>
+      <button class="btn" id="btn-endless" hidden><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg>ENDLESS MODE</button>
       <button class="btn" id="btn-shop"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg>SKIN SHOP</button>
       <button class="btn btn-ghost" id="btn-reset"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg>Reset progress</button>
     </div>
@@ -72,12 +76,22 @@ try{
   <!-- ============ SHOP ============ -->
   <section class="screen" id="screen-shop">
     <header class="topbar">
-      <button class="icon-btn" id="shop-back" title="Back"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+      <button class="icon-btn" id="shop-back" title="Back" aria-label="Back to menu"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
       <h2>Skin Shop</h2>
-      <button class="icon-btn" id="shop-theme" title="Dark / Light (T)"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
+      <button class="icon-btn" id="shop-theme" title="Dark / Light (T)" aria-label="Toggle colour theme"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
       <div class="coin-pill"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> <span id="shop-coins">0</span></div>
     </header>
     <div class="shop-grid" id="shop-grid"></div>
+  </section>
+
+  <!-- ============ LEVEL SELECT ============ -->
+  <section class="screen" id="screen-levels">
+    <header class="topbar">
+      <button class="icon-btn" id="levels-back" title="Back" aria-label="Back to menu"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+      <h2>Choose Your Rival</h2>
+      <div class="coin-pill"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> <span id="levels-coins">0</span></div>
+    </header>
+    <div class="level-grid" id="level-grid"></div>
   </section>
 
   <!-- ============ SETTINGS ============ -->
@@ -87,18 +101,31 @@ try{
       <h2>Settings</h2>
       <div class="settings-row">
         <span class="ctl-label"><svg class="ic" aria-hidden="true"><use href="#i-paw"/></svg>Cat voices</span>
-        <input type="range" id="vol-cat" min="0" max="100" value="85">
+        <input type="range" id="vol-cat" min="0" max="100" value="85" aria-label="Cat voice volume">
         <span class="settings-val" id="vol-cat-val">85%</span>
       </div>
       <div class="settings-row">
         <span class="ctl-label"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg>Effects</span>
-        <input type="range" id="vol-fx" min="0" max="100" value="25">
+        <input type="range" id="vol-fx" min="0" max="100" value="25" aria-label="Effects volume">
         <span class="settings-val" id="vol-fx-val">25%</span>
       </div>
+      <div class="settings-row">
+        <span class="ctl-label"><svg class="ic" aria-hidden="true"><use href="#i-music"/></svg>Music</span>
+        <input type="range" id="vol-music" min="0" max="100" value="35" aria-label="Music volume">
+        <span class="settings-val" id="vol-music-val">35%</span>
+      </div>
+      <div class="settings-row">
+        <span class="ctl-label"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg>Difficulty</span>
+        <div class="seg" id="seg-difficulty">
+          <button type="button" data-diff="easy">Easy</button>
+          <button type="button" data-diff="normal">Normal</button>
+          <button type="button" data-diff="hard">Hard</button>
+        </div>
+      </div>
       <button class="btn" id="settings-mute"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg>Sound on</button>
-      <p class="panel-note">Cat voices are the real meows. Effects are the hits, hisses and chimes.</p>
+      <p class="panel-note">Cat voices are the real meows. Effects are the hits, hisses and chimes. Music is the background loop.</p>
     </div>
-    <button class="icon-btn back-corner" id="settings-back" title="Back"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+    <button class="icon-btn back-corner" id="settings-back" title="Back" aria-label="Back to menu"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
   </section>
 
   <!-- ============ MIC SETUP ============ -->
@@ -119,7 +146,7 @@ try{
       </p>
       <div class="panel-msg" id="mic-msg"></div>
     </div>
-    <button class="icon-btn back-corner" id="mic-back" title="Back"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+    <button class="icon-btn back-corner" id="mic-back" title="Back" aria-label="Back to menu"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
   </section>
 
   <!-- ============ CALIBRATE ============ -->
@@ -150,6 +177,7 @@ try{
     <div class="arena">
       <div class="cat-wrap player" id="p-cat"></div>
       <div class="arena-center"><div class="vs-glow">VS</div></div>
+      <div class="combo-badge" id="combo-badge"></div>
       <div class="cat-wrap enemy" id="e-cat"></div>
       <div class="fx-layer" id="fx-layer"></div>
     </div>
@@ -181,10 +209,16 @@ try{
       </div>
       <div class="ctl-row small">
         <span class="ctl-label">Sensitivity</span>
-        <input type="range" id="sensitivity" min="1" max="100" value="55">
-        <button class="icon-btn" id="battle-mute" title="Mute (M)"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg></button>
-        <button class="icon-btn" id="btn-pause" title="Pause (P)"><svg class="ic" aria-hidden="true"><use href="#i-pause"/></svg></button>
+        <input type="range" id="sensitivity" min="1" max="100" value="55" aria-label="Microphone sensitivity">
+        <button class="icon-btn" id="battle-mute" title="Mute (M)" aria-label="Mute sound"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg></button>
+        <button class="icon-btn" id="btn-pause" title="Pause (P)" aria-label="Pause game"><svg class="ic" aria-hidden="true"><use href="#i-pause"/></svg></button>
       </div>
+    </div>
+
+    <div class="vs-intro" id="vs-intro" aria-hidden="true">
+      <span class="vi-side vi-p">YOU</span>
+      <span class="vi-vs">VS</span>
+      <span class="vi-side vi-e" id="vi-e">RIVAL</span>
     </div>
 
     <div class="overlay" id="pause-overlay">

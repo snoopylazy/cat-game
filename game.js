@@ -9,6 +9,7 @@ const $  = (s, r = document) => r.querySelector(s);
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp  = (a, b, t) => a + (b - a) * t;
 const rand  = (a, b) => a + Math.random() * (b - a);
+const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /* inline sprite icon reference */
 const icon = name => `<svg class="ic" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
@@ -74,9 +75,37 @@ const PLAYER_POWER = 1.30;   // how hard your loudness pushes
 const METER_RATE = 62;       // meter units per second
 const SPECIAL_GAIN = 12;     // charge per second at full loudness
 
+/* difficulty presets — scale the enemy's push and the damage it deals */
+const DIFFICULTY = {
+  easy:   { label:'Easy',   push:0.80, dmg:0.75 },
+  normal: { label:'Normal', push:1.00, dmg:1.00 },
+  hard:   { label:'Hard',   push:1.15, dmg:1.25 },
+};
+const diff = () => DIFFICULTY[save.difficulty] || DIFFICULTY.normal;
+
+/* ---------------- endless mode ----------------
+   Procedural waves: a random cat with a scaled difficulty curve. */
+const SOUND_FILES = [...new Set(LEVELS.map(l => l.snd))];
+const ENDLESS_ADJ  = ['Ferocious','Rabid','Mighty','Shadow','Thunder','Iron','Vicious','Savage','Cursed','Ancient','Royal','Grim','Phantom','Storm','Feral'];
+const ENDLESS_NOUN = ['Whiskers','Claw','Fang','Paw','Neko','Tom','Mittens','Stalker','Hunter','Brawler','Terror','Wraith','Fury','Scourge','Kaiser'];
+function makeEndlessLevel(wave){
+  const w = Math.max(0, wave - 1);
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  return {
+    name:  pick(ENDLESS_ADJ) + ' ' + pick(ENDLESS_NOUN),
+    skin:  pick(SKINS).id,
+    hits:  6 + Math.min(20, Math.round(w * 0.8)),
+    push:  clamp(0.50 + w * 0.018, 0.50, 0.90),
+    dmg:   12 + Math.min(16, Math.round(w * 0.7)),
+    phase: Math.random() * Math.PI * 2,
+    snd:   pick(SOUND_FILES),
+    rate:  +(0.82 + Math.random() * 0.5).toFixed(2),
+  };
+}
+
 /* ---------------- save ---------------- */
 const SAVE_KEY = 'catvscat.save.v1';
-const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25 };
+const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25, volMusic:0.35, difficulty:'normal', bestCombo:0, endlessBest:0 };
 let save = loadSave();
 function loadSave(){
   try{ return Object.assign({}, DEFAULT_SAVE, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); }
@@ -316,7 +345,61 @@ const Meows = {
       node.connect(g).connect(ctx.destination);
       node.start();
       this.active = { src, until: ctx.currentTime + buf.duration / node.playbackRate.value };
+      Music.duck(buf.duration / node.playbackRate.value);   // soften the music under the cat voice
     }).catch(() => { if(!SFX.muted) (opts.synth || (() => SFX.enemyMeow()))(); });   // synth fallback
+  },
+};
+
+/* ---------------- audio: background music ----------------
+   One looping track (sounds/bg-sounds.mp3). It ducks under cat voices
+   and is held silent during microphone calibration (the game asks you
+   to stay quiet, and the mic has no echo-cancellation). */
+const Music = {
+  buf:null, node:null, gain:null, loading:false, started:false, duckTimer:null, _held:false,
+  target(){ return (SFX.muted || this._held) ? 0 : save.volMusic; },
+  resolve(){ return Meows.resolve('sounds/bg-sounds.mp3'); },
+  start(){
+    this.started = true;
+    getAudioCtx();          // unlock / resume the audio context on a user gesture
+    this.load();
+    if(this.buf) this._play();
+  },
+  load(){
+    if(this.buf || this.loading) return;
+    this.loading = true;
+    const url = this.resolve();
+    fetch(url)
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(b => getAudioCtx().decodeAudioData(b))
+      .then(buf => { this.buf = buf; this.loading = false; if(this.started) this._play(); })
+      .catch(err => { this.loading = false; console.warn('[Music] could not load', url, '—', err.message || err); });
+  },
+  _play(){
+    if(this.node || !this.buf) return;
+    const ctx = getAudioCtx();
+    const node = ctx.createBufferSource();
+    node.buffer = this.buf; node.loop = true;
+    const g = ctx.createGain();
+    g.gain.value = this.target();
+    node.connect(g).connect(ctx.destination);
+    node.start();
+    this.node = node; this.gain = g;
+  },
+  /* ramp down while a meow plays, then ease back up */
+  duck(seconds){
+    if(!this.gain) return;
+    const ctx = getAudioCtx(), now = ctx.currentTime;
+    this.gain.gain.cancelScheduledValues(now);
+    this.gain.gain.setTargetAtTime(this.target() * 0.32, now, 0.03);
+    clearTimeout(this.duckTimer);
+    this.duckTimer = setTimeout(() => this.apply(0.3), Math.max(350, (seconds || 0.5) * 1000));
+  },
+  /* hold silent (e.g. during calibration) */
+  hold(on){ this._held = !!on; this.apply(0.2); },
+  apply(smooth){
+    if(!this.gain) return;
+    clearTimeout(this.duckTimer);
+    this.gain.gain.setTargetAtTime(this.target(), getAudioCtx().currentTime, smooth == null ? 0.05 : smooth);
   },
 };
 
@@ -505,7 +588,7 @@ function mountCat(host, skin){
 }
 
 /* ---------------- screens ---------------- */
-const SCREENS = ['menu','shop','settings','mic','calibrate','battle','result'];
+const SCREENS = ['menu','levels','shop','settings','mic','calibrate','battle','result'];
 function show(name){
   SCREENS.forEach(s => $('#screen-' + s).classList.toggle('active', s === name));
 }
@@ -562,6 +645,38 @@ $('#shop-grid').addEventListener('click', e => {
   refreshHeroes();
 });
 
+/* ---------------- level select ---------------- */
+function renderLevels(){
+  $('#levels-coins').textContent = save.coins;
+  const grid = $('#level-grid');
+  grid.innerHTML = '';
+  const progress = save.bestLevel;   // next level to beat (LEVELS.length+1 = all cleared)
+  LEVELS.forEach((L, i) => {
+    const lv = i + 1;
+    const unlocked = lv <= progress;
+    const cleared  = lv < progress;
+    const card = document.createElement('button');
+    card.className = 'level-card' + (unlocked ? '' : ' locked') +
+                     (cleared ? ' cleared' : '') + (lv === LEVELS.length ? ' boss' : '');
+    card.disabled = !unlocked;
+    if(unlocked) card.dataset.level = lv;
+    card.innerHTML = `
+      <div class="level-no">${lv}</div>
+      <div class="level-preview">${buildCatSVG(skinById(L.skin))}</div>
+      <div class="level-name">${L.name}</div>
+      <div class="level-state">${cleared ? icon('check') : unlocked ? icon('play') : icon('lock')}</div>`;
+    grid.appendChild(card);
+  });
+}
+$('#level-grid').addEventListener('click', e => {
+  const card = e.target.closest('.level-card[data-level]');
+  if(!card) return;
+  SFX.click();
+  pendingLevel = +card.dataset.level;
+  pendingEndless = null;
+  show('mic');
+});
+
 /* ---------------- heroes on menu ---------------- */
 function refreshHeroes(){
   mountCat($('#hero-player'), skinById(save.equipped));
@@ -569,7 +684,9 @@ function refreshHeroes(){
   $('#menu-coins').querySelector('span').textContent = save.coins;
   $('#menu-progress').innerHTML = save.bestLevel > LEVELS.length
     ? 'You beat the game! ' + icon('crown')
-    : `Level ${save.bestLevel} / ${LEVELS.length} · ${icon('coin')} ${save.coins}`;
+    : `Level ${save.bestLevel} / ${LEVELS.length} · ${icon('coin')} ${save.coins}` + (save.bestCombo > 1 ? ` · best ${save.bestCombo}×` : '');
+  const eb = $('#btn-endless');
+  if(eb) eb.hidden = !(save.bestLevel > LEVELS.length);
 }
 
 /* ---------------- game state ---------------- */
@@ -579,10 +696,21 @@ const G = {
   meter:0, special:0, specialReady:false,
   myLevel:0, enemyLevelVal:0, t:0, lastT:0,
   shake:0, lastMeow:0, lastGrowl:0,
-  scared:false, lastWhimper:0,
+  scared:false, lastWhimper:0, combo:0,
   keyboardMode:false, result:'',
+  L:null, endless:false, wave:0,
 };
 const Keys = { shout:false };
+
+/* set when the player picks a specific level from the level-select screen */
+let pendingLevel = null;
+let pendingEndless = null;   // wave to start endless mode at
+function nextStartLevel(){ return pendingLevel != null ? pendingLevel : (save.bestLevel > LEVELS.length ? 1 : save.bestLevel); }
+/* route the mic / keyboard setup to either a normal level or an endless wave */
+function startResolved(){
+  if(pendingEndless != null){ const w = pendingEndless; pendingEndless = null; startEndless(w); return; }
+  startBattle(nextStartLevel());
+}
 
 function sensitivityVal(){ return save.sensitivity / 100; }
 
@@ -603,13 +731,19 @@ function enemyRaw(t, L){
   const wave    = 0.84 + 0.16 * Math.sin(t * 1.4 + L.phase);
   const flutter = 0.90 + 0.20 * Math.sin(t * 5.1 + L.phase * 2);
   const roar    = Math.sin(t * 0.7 + L.phase) > 0.92 ? 1.28 : 1;
-  return clamp(L.push * wave * flutter * roar, 0, 1.3);
+  return clamp(L.push * diff().push * wave * flutter * roar, 0, 1.3);
 }
 
 /* ---------------- battle ---------------- */
-function startBattle(level){
+function startBattle(level, opts){
+  opts = opts || {};
+  const L = opts.level || LEVELS[level - 1];
   G.level = level;
-  const L = LEVELS[level - 1];
+  G.L = L;
+  G.endless = !!opts.endless;
+  G.wave = opts.wave || 0;
+  pendingLevel = null;
+  pendingEndless = null;
   G.playerHP = PLAYER_MAX;
   G.enemyMax = L.hits * HP_PER_HIT;
   G.enemyHP = G.enemyMax;
@@ -617,6 +751,7 @@ function startBattle(level){
   G.myLevel = 0; G.enemyLevelVal = 0; G.t = 0; G.shake = 0;
   G.lastMeow = -1; G.lastGrowl = -1;   // reset voice throttles so every fight makes sound
   G.scared = false; G.lastWhimper = 0;
+  G.combo = 0;
   G.paused = false; G.running = true;
   G.result = '';
 
@@ -625,15 +760,31 @@ function startBattle(level){
   Meows.preload(L.snd);   // have the enemy's voice ready before the first shout
   Meows.preload(playerVoice().src);   // …and yours
   $('#p-name').textContent = 'You';
-  $('#e-name').innerHTML = (level === LEVELS.length ? icon('crown') + ' ' : '') + L.name;
-  $('#lvl-pill').textContent = 'LV ' + level + ' / ' + LEVELS.length;
+  $('#e-name').innerHTML = (G.endless ? icon('sparkle') + ' '
+                          : level === LEVELS.length ? icon('crown') + ' ' : '') + L.name;
+  $('#lvl-pill').textContent = G.endless ? 'WAVE ' + G.wave : 'LV ' + level + ' / ' + LEVELS.length;
   $('#pause-overlay').classList.remove('show');
   updateHP();
   show('battle');
-  G.lastT = performance.now();
-  requestAnimationFrame(loop);
+  /* VS intro card, then the fight begins */
+  const vi = $('#vs-intro');
+  if(vi){
+    $('#vi-e').textContent = L.name;
+    vi.classList.remove('run'); void vi.offsetWidth; vi.classList.add('run');
+  }
+  const introMs = REDUCE ? 0 : 900;
+  setTimeout(() => {
+    if(!G.running) return;
+    if(vi) vi.classList.remove('run');
+    G.lastT = performance.now();
+    requestAnimationFrame(loop);
+  }, introMs);
   /* intro taunt — the rival roars once as the fight begins */
-  setTimeout(() => { if(G.running && !G.paused) Meows.play(L.snd, { rate:L.rate, vol:0.9, vary:false }); }, 450);
+  setTimeout(() => { if(G.running && !G.paused) Meows.play(L.snd, { rate:L.rate, vol:0.9, vary:false }); }, introMs + 450);
+}
+
+function startEndless(wave){
+  startBattle(wave, { level: makeEndlessLevel(wave), endless:true, wave });
 }
 
 function updateHP(){
@@ -688,10 +839,11 @@ function spawnFx(side, text, color){
 }
 
 function landHit(byPlayer){
-  const L = LEVELS[G.level - 1];
+  const L = G.L;
   if(byPlayer){
     const dmg = 14 + Math.round(G.myLevel * 10);
     G.enemyHP -= dmg;
+    G.combo++;
     G.meter = 0;
     G.shake = 12;
     flash('player', 'attacking', 400);
@@ -699,12 +851,14 @@ function landHit(byPlayer){
     spawnFx('enemy', '-' + dmg, '#ffffff');
     SFX.hit();
   } else {
-    G.playerHP -= L.dmg;
+    const dmg = Math.round(L.dmg * diff().dmg);
+    G.playerHP -= dmg;
+    G.combo = 0;
     G.meter = 0;
     G.shake = 14;
     flash('enemy', 'attacking', 400);
     flash('player', 'hurt', 360);
-    spawnFx('player', '-' + L.dmg, '#c9c9c9');
+    spawnFx('player', '-' + dmg, '#c9c9c9');
     Meows.play(L.snd, { rate:L.rate, vol:0.7 });   // the enemy's own attack cry
     SFX.hiss();
   }
@@ -716,7 +870,7 @@ function landHit(byPlayer){
 function useSpecial(){
   if(!G.specialReady || !G.running || G.paused) return;
   G.special = 0; G.specialReady = false;
-  const L = LEVELS[G.level - 1];
+  const L = G.L;
   const dmg = 40 + Math.round(G.enemyMax * 0.08);
   G.enemyHP -= dmg;
   G.meter = Math.min(100, G.meter + 34);
@@ -742,7 +896,7 @@ function loop(ts){
 }
 
 function updateBattle(dt){
-  const L = LEVELS[G.level - 1];
+  const L = G.L;
 
   // loudness (attack fast, release slower)
   const target = readPlayerRaw(dt);
@@ -820,6 +974,16 @@ function render(){
   // enemy looks rattled when nearly beaten
   $('#e-cat').classList.toggle('scared', G.scared);
 
+  // combo badge
+  const cb = $('#combo-badge');
+  if(G.combo > 1){
+    if(cb.textContent !== G.combo + '× COMBO'){
+      cb.textContent = G.combo + '× COMBO';
+      cb.classList.remove('bump'); void cb.offsetWidth; cb.classList.add('bump');
+    }
+    cb.classList.add('show');
+  } else cb.classList.remove('show');
+
   // screen shake
   const arena = $('.arena');
   if(G.shake > 0.3){
@@ -838,32 +1002,52 @@ function endBattle(won){
   setShout('enemy', false);
   $('.arena').style.transform = '';
 
+  const L = G.L;
   let coins = 0;
   if(won){
     const hpKeep = Math.round((G.playerHP / PLAYER_MAX) * 50);
     const flawless = G.playerHP >= PLAYER_MAX ? 50 : 0;
-    coins = 25 + G.level * 5 + hpKeep + flawless;
+    const comboBonus = Math.max(0, G.combo - 1) * 3;   // +3 coins per hit beyond the first
+    coins = (G.endless ? 20 + G.wave * 4 : 25 + G.level * 5) + hpKeep + flawless + comboBonus;
     save.coins += coins;
-    if(G.level + 1 > save.bestLevel) save.bestLevel = Math.min(LEVELS.length + 1, G.level + 1);
+    if(G.combo > save.bestCombo) save.bestCombo = G.combo;
+    if(G.endless){
+      if(G.wave > (save.endlessBest || 0)) save.endlessBest = G.wave;
+    } else if(G.level + 1 > save.bestLevel){
+      save.bestLevel = Math.min(LEVELS.length + 1, G.level + 1);
+    }
     persist();
+    if(!G.endless && G.level < LEVELS.length) Meows.preload(LEVELS[G.level].snd);   // warm the next rival's voice
     SFX.win();
     // the beaten rival whimpers as it goes down
-    setTimeout(() => Meows.play(LEVELS[G.level - 1].snd, { rate:(LEVELS[G.level - 1].rate || 1) * 1.28, vol:0.7, vary:false }), 380);
+    setTimeout(() => Meows.play(L.snd, { rate:(L.rate || 1) * 1.28, vol:0.7, vary:false }), 380);
   } else {
     coins = 5;
     save.coins += coins;
     persist();
     SFX.lose();
     // the rival's triumphant meow
-    setTimeout(() => Meows.play(LEVELS[G.level - 1].snd, { rate:(LEVELS[G.level - 1].rate || 1) * 0.95, vol:0.9, vary:false }), 380);
+    setTimeout(() => Meows.play(L.snd, { rate:(L.rate || 1) * 0.95, vol:0.9, vary:false }), 380);
   }
 
-  const last = G.level >= LEVELS.length;
+  const last = !G.endless && G.level >= LEVELS.length;
   const rIcon = $('#result-icon'), title = $('#result-title'), text = $('#result-text'),
         rc = $('#result-coins'), next = $('#btn-next'), retry = $('#btn-retry');
 
   rc.innerHTML = icon('coin') + '+' + coins;
-  if(won && last){
+  if(G.endless && won){
+    rIcon.className = 'panel-icon accent-amber'; rIcon.innerHTML = icon('sparkle');
+    title.textContent = 'Wave ' + G.wave + ' cleared!';
+    text.textContent = `You silenced ${L.name}.` + (G.combo > 1 ? ` Best combo: ${G.combo}×.` : '') +
+                       ` Best wave: ${save.endlessBest || 0}.`;
+    next.hidden = false; retry.hidden = true;
+    next.innerHTML = icon('play') + 'Wave ' + (G.wave + 1);
+  } else if(G.endless){
+    rIcon.className = 'panel-icon accent-pink'; rIcon.innerHTML = icon('sad');
+    title.textContent = 'You fell on wave ' + G.wave + '!';
+    text.textContent = `${L.name} was louder. Best wave: ${save.endlessBest || 0}.`;
+    next.hidden = true; retry.hidden = false;
+  } else if(won && last){
     rIcon.className = 'panel-icon accent-amber'; rIcon.innerHTML = icon('crown');
     title.textContent = 'YOU BEAT THE GAME!';
     text.textContent = `You dethroned ${LEVELS[LEVELS.length - 1].name}. All ${LEVELS.length} levels conquered!`;
@@ -871,13 +1055,13 @@ function endBattle(won){
   } else if(won){
     rIcon.className = 'panel-icon accent-amber'; rIcon.innerHTML = icon('trophy');
     title.textContent = 'Level ' + G.level + ' cleared!';
-    text.textContent = `You beat ${LEVELS[G.level - 1].name}.`;
+    text.textContent = `You beat ${L.name}.` + (G.combo > 1 ? ` Best combo: ${G.combo}×` : '');
     next.hidden = false; retry.hidden = true;
     next.innerHTML = icon('play') + 'Level ' + (G.level + 1);
   } else {
     rIcon.className = 'panel-icon accent-pink'; rIcon.innerHTML = icon('sad');
     title.textContent = 'You lost!';
-    text.textContent = `${LEVELS[G.level - 1].name} was louder. Shout harder!`;
+    text.textContent = `${L.name} was louder. Shout harder!`;
     next.hidden = true; retry.hidden = false;
   }
   show('result');
@@ -887,6 +1071,7 @@ function endBattle(won){
 let calibTimer = null;
 function startCalibration(){
   show('calibrate');
+  Music.hold(true);   // go quiet while we measure the room
   let samples = [], count = 3, elapsed = 0;
   const countEl = $('#calib-count');
   const total = 3.2;
@@ -903,7 +1088,8 @@ function startCalibration(){
       clearInterval(calibTimer);
       const avg = samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : 0.006;
       Mic.noiseFloor = clamp(avg * 1.8, 0.003, 0.05);
-      startBattle(save.bestLevel > LEVELS.length ? 1 : save.bestLevel);
+      Music.hold(false);
+      startResolved();
     }
   }, 80);
 }
@@ -911,12 +1097,22 @@ function startCalibration(){
 /* ---------------- event wiring ---------------- */
 function bind(){
   /* menu */
-  $('#btn-play').addEventListener('click', () => { SFX.click(); getAudioCtx(); show('mic'); });
+  $('#btn-play').addEventListener('click', () => { SFX.click(); pendingLevel = null; pendingEndless = null; getAudioCtx(); show('mic'); });
+  $('#btn-levels').addEventListener('click', () => { SFX.click(); renderLevels(); show('levels'); });
+  $('#btn-endless').addEventListener('click', () => { SFX.click(); pendingLevel = null; pendingEndless = 1; show('mic'); });
   $('#btn-shop').addEventListener('click', () => { SFX.click(); renderShop(); show('shop'); });
   $('#btn-reset').addEventListener('click', () => {
     if(confirm('Reset coins, skins and progress?')){
       save = Object.assign({}, DEFAULT_SAVE, { owned:['shadow'], equipped:'shadow' });
-      persist(); refreshHeroes(); SFX.deny(); toast('Progress reset');
+      persist();
+      // re-sync everything that mirrors save state
+      SFX.muted = save.muted;
+      applyTheme();
+      updateSettingsUI();
+      document.querySelectorAll('#menu-mute, #battle-mute').forEach(b => b.innerHTML = icon(save.muted ? 'mute' : 'sound'));
+      $('#sensitivity').value = save.sensitivity;
+      refreshHeroes();
+      SFX.deny(); toast('Progress reset');
     }
   });
   $('#menu-mute').addEventListener('click', toggleMute);
@@ -936,12 +1132,29 @@ function bind(){
     $('#vol-fx-val').textContent = e.target.value + '%';
   });
   $('#vol-fx').addEventListener('change', () => SFX.click());   // little preview of the new level
+  $('#seg-difficulty').addEventListener('click', e => {
+    const b = e.target.closest('button[data-diff]');
+    if(!b) return;
+    save.difficulty = b.dataset.diff; persist();
+    updateSettingsUI(); SFX.click();
+  });
+
+  /* music: volume slider + start on the first user gesture (autoplay policy) */
+  $('#vol-music').addEventListener('input', e => {
+    save.volMusic = +e.target.value / 100; persist();
+    $('#vol-music-val').textContent = e.target.value + '%';
+    Music.apply();
+  });
+  const startMusic = () => Music.start();
+  window.addEventListener('pointerdown', startMusic, { once:true });
+  window.addEventListener('keydown', startMusic, { once:true });
 
   /* shop */
   $('#shop-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
+  $('#levels-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
 
   /* mic setup */
-  $('#mic-back').addEventListener('click', () => { SFX.click(); show('menu'); });
+  $('#mic-back').addEventListener('click', () => { SFX.click(); pendingLevel = null; show('menu'); });
   $('#btn-enable-mic').addEventListener('click', async () => {
     const msg = $('#mic-msg');
     msg.className = 'panel-msg';
@@ -963,7 +1176,7 @@ function bind(){
     SFX.click();
     G.keyboardMode = true;
     toast('Quiet mode: hold SPACE to roar');
-    startBattle(save.bestLevel > LEVELS.length ? 1 : save.bestLevel);
+    startResolved();
   });
 
   /* battle controls */
@@ -983,23 +1196,35 @@ function bind(){
   shoutBtn.addEventListener('pointerdown', startShout);
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => shoutBtn.addEventListener(ev, endShout));
   $('#btn-quit').addEventListener('click', () => {
-    G.running = false; G.paused = false;
+    G.running = false; G.paused = false; Keys.shout = false;
     $('#pause-overlay').classList.remove('show');
+    Mic.stop();   // release the microphone for privacy
     refreshHeroes(); show('menu');
   });
 
   /* result */
-  $('#btn-next').addEventListener('click', () => { SFX.click(); startBattle(Math.min(LEVELS.length, G.level + 1)); });
-  $('#btn-retry').addEventListener('click', () => { SFX.click(); startBattle(G.level); });
-  $('#btn-menu').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
+  $('#btn-next').addEventListener('click', () => {
+    SFX.click();
+    if(G.endless) startEndless(G.wave + 1);
+    else startBattle(Math.min(LEVELS.length, G.level + 1));
+  });
+  $('#btn-retry').addEventListener('click', () => {
+    SFX.click();
+    if(G.endless) startEndless(G.wave);
+    else startBattle(G.level);
+  });
+  $('#btn-menu').addEventListener('click', () => { SFX.click(); Mic.stop(); refreshHeroes(); show('menu'); });
 
   /* keyboard */
   window.addEventListener('keydown', e => {
-    if(e.code === 'Space'){ Keys.shout = true; if($('#screen-battle').classList.contains('active')) e.preventDefault(); }
-    if(e.key === 'f' || e.key === 'F') useSpecial();
-    if(e.key === 'Escape' || e.key === 'p' || e.key === 'P'){
-      if($('#screen-battle').classList.contains('active')) pauseGame();
+    const inBattle = $('#screen-battle').classList.contains('active');
+    const tag = (document.activeElement || {}).tagName;
+    if(e.code === 'Space'){
+      if(tag !== 'INPUT' && tag !== 'TEXTAREA') e.preventDefault();   // no page scroll / stray button re-click
+      if(inBattle) Keys.shout = true;
     }
+    if((e.key === 'f' || e.key === 'F') && inBattle) useSpecial();
+    if((e.key === 'Escape' || e.key === 'p' || e.key === 'P') && inBattle) pauseGame();
     if(e.key === 'm' || e.key === 'M') toggleMute();
     if(e.key === 't' || e.key === 'T') toggleTheme();
   });
@@ -1023,14 +1248,17 @@ function toggleMute(){
   persist();
   document.querySelectorAll('#menu-mute, #battle-mute').forEach(b => b.innerHTML = icon(save.muted ? 'mute' : 'sound'));
   if(typeof updateSettingsUI === 'function') updateSettingsUI();
+  Music.apply();
   if(!save.muted) SFX.click();
 }
 
 function updateSettingsUI(){
-  const cat = Math.round(save.volCat * 100), fx = Math.round(save.volFx * 100);
+  const cat = Math.round(save.volCat * 100), fx = Math.round(save.volFx * 100), mus = Math.round(save.volMusic * 100);
   $('#vol-cat').value = cat; $('#vol-cat-val').textContent = cat + '%';
   $('#vol-fx').value  = fx;  $('#vol-fx-val').textContent  = fx + '%';
+  $('#vol-music').value = mus; $('#vol-music-val').textContent = mus + '%';
   $('#settings-mute').innerHTML = icon(save.muted ? 'mute' : 'sound') + (save.muted ? 'Sound off' : 'Sound on');
+  document.querySelectorAll('#seg-difficulty button').forEach(b => b.classList.toggle('on', b.dataset.diff === diff().label.toLowerCase()));
 }
 
 function applyTheme(){
