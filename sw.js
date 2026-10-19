@@ -1,7 +1,9 @@
 /* Cat vs Cat — service worker
-   Caches the app shell so the game works offline (PWA install).
-   Audio is cached on demand the first time it plays. */
-const VERSION = 'catvscat-v1';
+   Keeps the game installable + playable offline.
+   App code (HTML/CSS/JS) is network-first so a fresh copy always wins when
+   you're online, falling back to cache when offline. Audio is cache-first
+   because the meow files are big and never change. */
+const VERSION = 'catvscat-v2';
 const SHELL = [
   './',
   './index.html',
@@ -13,15 +15,18 @@ const SHELL = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())
+    caches.open(VERSION)
+      .then(c => c.addAll(SHELL))
+      .catch(() => {})                 // a missing file must not block install
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -30,32 +35,30 @@ self.addEventListener('fetch', e => {
   if(req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  if(url.origin !== self.location.origin) return;   // only cache same-origin
+  if(url.origin !== self.location.origin) return;   // only handle same-origin
 
-  // App shell: cache-first (fast, offline)
-  const isShell = SHELL.some(p => url.pathname.endsWith(p.replace('./', '')));
-  if(isShell){
+  // Audio: cache-first (immutable, avoids re-downloading meows)
+  if(req.destination === 'audio' || /\.(mp3|wav|ogg)$/i.test(url.pathname)){
     e.respondWith(
       caches.match(req).then(hit => hit || fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(VERSION).then(c => c.put(req, copy));
+        if(res && res.status === 200){
+          const copy = res.clone();
+          caches.open(VERSION).then(c => c.put(req, copy));
+        }
         return res;
       }))
     );
     return;
   }
 
-  // Audio + everything else: stale-while-revalidate
+  // App shell + everything else: network-first, fall back to cache when offline
   e.respondWith(
-    caches.match(req).then(hit => {
-      const net = fetch(req).then(res => {
-        if(res && res.status === 200){
-          const copy = res.clone();
-          caches.open(VERSION).then(c => c.put(req, copy));
-        }
-        return res;
-      }).catch(() => hit);
-      return hit || net;
-    })
+    fetch(req).then(res => {
+      if(res && res.status === 200){
+        const copy = res.clone();
+        caches.open(VERSION).then(c => c.put(req, copy));
+      }
+      return res;
+    }).catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
   );
 });

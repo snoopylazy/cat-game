@@ -1690,9 +1690,16 @@ function boot(){
 function registerSW(){
   if(!('serviceWorker' in navigator)) return;
   if(location.protocol === 'file:') return;   // can't register from file://
+  /* when a new worker takes over, reload once so we don't keep serving an old build */
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').then(
-      reg => console.info('[SW] registered:', reg.scope),
+      reg => { if(reg.update) reg.update(); console.info('[SW] registered:', reg.scope); },
       err => console.warn('[SW] registration failed:', err.message || err)
     );
   });
