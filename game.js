@@ -34,6 +34,11 @@ const SKINS = [
   { id:'professor', name:'Professor Paws',  price:1000, fur:'#374151', belly:'#f9fafb', eye:'#0ea5e9', patch:'#f9fafb', pattern:'tuxedo',  accessory:'shades',  accColor:'#111827', voice:'sounds/alex_jauk-annoyed-cat-meows-angrily-438006.mp3',            vrate:1.02 },
   { id:'cosmic',    name:'Cosmic Neko',     price:1200, fur:'#1e1b4b', belly:'#c7d2fe', eye:'#facc15', patch:'#fde047', pattern:'stars',   accessory:'halo',    accColor:'#fde047', voice:'sounds/freesound_community-cat-meow-14536.mp3',                    vrate:1.28 },
   { id:'captain',   name:'Cap\u2019n Whiskers', price:1500, fur:'#fde68a', belly:'#fffbeb', eye:'#1d4ed8', patch:'#a16207', pattern:'points', accessory:'pirate',  accColor:'#111827', voice:'sounds/poorartistt-angry-cat-sound-effect-no-copyright-405796.mp3', vrate:0.84 },
+  /* --- legendary set: unlocked with late-game coins --- */
+  { id:'angel',     name:'Angel Paws',      price:1800, fur:'#fef9c3', belly:'#ffffff', eye:'#38bdf8', patch:'#fde047', pattern:'none',    accessory:'wings',   accColor:'#bae6fd', voice:'sounds/freesound_community-cat-meow-14536.mp3',                    vrate:1.32 },
+  { id:'viking',    name:'Viking Whiskers', price:2000, fur:'#d97706', belly:'#fef3c7', eye:'#0ea5e9', patch:'#92400e', pattern:'stripes', accessory:'helmet',  accColor:'#78716c', voice:'sounds/tanweraman-angry-cat-hq-sound-effect-240675.mp3',           vrate:0.88 },
+  { id:'devil',     name:'Devil Claws',     price:2200, fur:'#7f1d1d', belly:'#fca5a5', eye:'#facc15', patch:'#450a0a', pattern:'spots',   accessory:'horns',   accColor:'#dc2626', voice:'sounds/poorartistt-angry-cat-sound-effect-no-copyright-405796.mp3', vrate:0.80 },
+  { id:'robot',     name:'Robo-Cat',        price:2500, fur:'#94a3b8', belly:'#e2e8f0', eye:'#22d3ee', patch:'#475569', pattern:'none',    accessory:'antenna', accColor:'#22d3ee', voice:'sounds/alex_jauk-annoyed-cat-meows-angrily-438006.mp3',            vrate:1.08 },
 ];
 const skinById = id => SKINS.find(s => s.id === id) || SKINS[0];
 /* the equipped cat's real voice + pitch (used whenever your cat shouts) */
@@ -44,6 +49,11 @@ function playerVoice(){
 function playerMeow(opts){
   const v = playerVoice();
   Meows.play(v.src, Object.assign({ rate:v.rate, synth:() => SFX.meow() }, opts || {}));
+}
+/* customizer: the equipped cat's accessory override (undefined = use the skin's own) */
+function playerAcc(){
+  return (save.accOverride === undefined || save.accOverride === null || save.accOverride === '')
+    ? undefined : save.accOverride;
 }
 
 /* ---------------- data: levels (17) ----------------
@@ -123,9 +133,9 @@ function checkAchievements(won, battle){
 
 /* difficulty presets — scale the enemy's push and the damage it deals */
 const DIFFICULTY = {
-  easy:   { label:'Easy',   push:0.80, dmg:0.75 },
-  normal: { label:'Normal', push:1.00, dmg:1.00 },
-  hard:   { label:'Hard',   push:1.15, dmg:1.25 },
+  easy:   { label:'Easy',   push:0.80, dmg:0.75, coin:0.80 },
+  normal: { label:'Normal', push:1.00, dmg:1.00, coin:1.00 },
+  hard:   { label:'Hard',   push:1.15, dmg:1.25, coin:1.35 },
 };
 const diff = () => DIFFICULTY[save.difficulty] || DIFFICULTY.normal;
 
@@ -140,9 +150,9 @@ function makeEndlessLevel(wave){
   return {
     name:  pick(ENDLESS_ADJ) + ' ' + pick(ENDLESS_NOUN),
     skin:  pick(SKINS).id,
-    hits:  6 + Math.min(20, Math.round(w * 0.8)),
-    push:  clamp(0.50 + w * 0.018, 0.50, 0.90),
-    dmg:   12 + Math.min(16, Math.round(w * 0.7)),
+    hits:  5 + Math.min(22, Math.round(w * 0.75)),   // gentler start, higher ceiling
+    push:  clamp(0.44 + w * 0.017, 0.44, 0.92),
+    dmg:   10 + Math.min(18, Math.round(w * 0.72)),
     phase: Math.random() * Math.PI * 2,
     snd:   pick(SOUND_FILES),
     rate:  +(0.82 + Math.random() * 0.5).toFixed(2),
@@ -151,7 +161,7 @@ function makeEndlessLevel(wave){
 
 /* ---------------- save ---------------- */
 const SAVE_KEY = 'catvscat.save.v1';
-const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25, volMusic:0.35, difficulty:'normal', bestCombo:0, endlessBest:0, achievements:{}, stats:{fightsWon:0, fightsLost:0, totalCoinsEarned:0}, tutorialSeen:false };
+const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25, volMusic:0.35, difficulty:'normal', bestCombo:0, endlessBest:0, achievements:{}, stats:{fightsWon:0, fightsLost:0, totalCoinsEarned:0}, tutorialSeen:false, daily:0, dailyStreak:0, endlessRuns:[], comboRuns:[], accOverride:null };
 let save = loadSave();
 function loadSave(){
   try{ return Object.assign({}, DEFAULT_SAVE, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); }
@@ -486,9 +496,9 @@ const Mic = {
 };
 
 /* ---------------- cat art ---------------- */
-function buildCatSVG(skin){
+function buildCatSVG(skin, accOverride){
   const pattern = skin.pattern || 'none';
-  const acc = skin.accessory || 'none';
+  const acc = accOverride !== undefined ? (accOverride || 'none') : (skin.accessory || 'none');
   const style = `--fur:${skin.fur};--belly:${skin.belly};--eye:${skin.eye};` +
                 `--patch:${skin.patch || skin.fur};--inner:${skin.belly};--acc:${skin.accColor || '#ef4444'};`;
   return `
@@ -626,15 +636,39 @@ function buildCatSVG(skin){
     <path d="M74 80 h30 a15 15 0 0 1 -30 0 z" fill="#111827"/>
     <path d="M74 80 q-18 -8 -24 -24" stroke="#111827" stroke-width="3" fill="none"/>
   </g>
+  <g class="acc acc-wings">
+    <path d="M46 130 q-44 -18 -40 -70 q30 10 44 40 q6 -34 -8 -66 q34 16 40 66 z" fill="var(--acc)" opacity=".95"/>
+    <path d="M178 130 q44 -18 40 -70 q-30 10 -44 40 q-6 -34 8 -66 q-34 16 -40 66 z" fill="var(--acc)" opacity=".95"/>
+  </g>
+  <g class="acc acc-horns">
+    <path d="M74 48 q-22 -30 -6 -48 q14 12 20 34 z" fill="var(--acc)"/>
+    <path d="M150 48 q22 -30 6 -48 q-14 12 -20 34 z" fill="var(--acc)"/>
+    <path d="M82 40 q-12 -18 -4 -30" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/>
+    <path d="M142 40 q12 -18 4 -30" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/>
+  </g>
+  <g class="acc acc-antenna">
+    <path d="M112 44 V14" stroke="var(--acc)" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="112" cy="10" r="8" fill="var(--acc)"/>
+    <circle cx="112" cy="10" r="3.4" fill="#fff"/>
+    <path d="M74 50 q-10 -14 -4 -24" stroke="var(--acc)" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="68" cy="24" r="5" fill="var(--acc)"/>
+  </g>
+  <g class="acc acc-helmet">
+    <path d="M56 62 q0 -58 56 -58 q56 0 56 58 q-56 -14 -112 0 z" fill="var(--acc)"/>
+    <path d="M56 62 q56 -14 112 0 q0 12 -56 12 q-56 0 -56 -12 z" fill="rgba(0,0,0,.25)"/>
+    <path d="M46 58 q-26 -22 -14 -44 q22 6 30 30 z" fill="var(--acc)"/>
+    <path d="M178 58 q26 -22 14 -44 q-22 6 -30 30 z" fill="var(--acc)"/>
+    <path d="M112 4 V62" stroke="rgba(255,255,255,.4)" stroke-width="4"/>
+  </g>
 </svg>`;
 }
 
-function mountCat(host, skin){
-  host.innerHTML = `<div class="cat-inner">${buildCatSVG(skin)}<div class="waves"><span></span><span></span><span></span></div></div>`;
+function mountCat(host, skin, accOverride){
+  host.innerHTML = `<div class="cat-inner">${buildCatSVG(skin, accOverride)}<div class="waves"><span></span><span></span><span></span></div></div>`;
 }
 
 /* ---------------- screens ---------------- */
-const SCREENS = ['menu','levels','shop','achievements','stats','settings','mic','calibrate','battle','result'];
+const SCREENS = ['menu','levels','shop','achievements','stats','customize','settings','mic','calibrate','battle','result'];
 function show(name){
   SCREENS.forEach(s => $('#screen-' + s).classList.toggle('active', s === name));
 }
@@ -710,6 +744,40 @@ function renderAchievements(){
   });
 }
 
+/* ---------------- daily reward ---------------- */
+const DAY_MS = 24 * 60 * 60 * 1000;
+function dailyReady(){ return Date.now() - (save.daily || 0) >= DAY_MS; }
+function dailyReward(){
+  const last = save.daily || 0;
+  const within = last && (Date.now() - last) < 2 * DAY_MS;
+  const streak = within ? Math.min(7, (save.dailyStreak || 0) + 1) : 1;
+  return { streak, amount: 25 + streak * 15 };
+}
+function updateDailyUI(){
+  const b = $('#btn-daily');
+  if(!b) return;
+  const ready = dailyReady();
+  b.hidden = !ready;
+  if(ready){
+    const { streak, amount } = dailyReward();
+    b.innerHTML = icon('coin') + `Day ${streak} reward · +${amount}`;
+  }
+}
+function claimDaily(){
+  if(!dailyReady()) return;
+  const { streak, amount } = dailyReward();
+  save.dailyStreak = streak;
+  save.daily = Date.now();
+  save.coins += amount;
+  if(!save.stats) save.stats = {fightsWon:0, fightsLost:0, totalCoinsEarned:0};
+  save.stats.totalCoinsEarned += amount;
+  persist();
+  SFX.buy();
+  toast(icon('coin') + ` Daily reward: +${amount} (day ${streak})`);
+  updateDailyUI();
+  refreshHeroes();
+}
+
 /* ---------------- stats ---------------- */
 function renderStats(){
   const panel = $('#stats-panel');
@@ -730,8 +798,73 @@ function renderStats(){
     { val:skinsOwned + ' / ' + SKINS.length, label:'Skins Owned' },
     { val:totalFights, label:'Total Fights' },
   ];
-  panel.innerHTML = stats.map(st => `<div class="stat-card"><div class="stat-val">${st.val}</div><div class="stat-label">${st.label}</div></div>`).join('');
+  panel.innerHTML = stats.map(st => `<div class="stat-card"><div class="stat-val">${st.val}</div><div class="stat-label">${st.label}</div></div>`).join('')
+    + renderLeaderboards();
 }
+
+/* local leaderboards: top endless waves & top combos (last 10 kept) */
+function renderLeaderboards(){
+  const runs = Array.isArray(save.endlessRuns) ? save.endlessRuns.slice(0, 10) : [];
+  const combos = Array.isArray(save.comboRuns) ? save.comboRuns.slice(0, 10) : [];
+  const fmt = ts => { try{ return new Date(ts).toLocaleDateString(); }catch(e){ return ''; } };
+  const rows = arr => arr.length
+    ? arr.map((r, i) => `<li><span class="lb-pos">${i + 1}</span><span class="lb-val">${r.wave != null ? 'Wave ' + r.wave : r.combo + '×'}</span><span class="lb-date">${fmt(r.date)}</span></li>`).join('')
+    : '<li class="lb-empty">No runs yet — play Endless Mode!</li>';
+  return `
+    <div class="lb-wrap">
+      <div class="lb-col">
+        <h3>Top Endless Waves</h3>
+        <ol class="lb-list">${rows(runs)}</ol>
+      </div>
+      <div class="lb-col">
+        <h3>Best Combos</h3>
+        <ol class="lb-list">${rows(combos)}</ol>
+      </div>
+    </div>`;
+}
+
+/* ---------------- customizer ---------------- */
+const ACCESSORIES = [
+  { id:'none',    label:'None' },
+  { id:'scarf',   label:'Scarf' },
+  { id:'bandana', label:'Bandana' },
+  { id:'hat',     label:'Wizard Hat' },
+  { id:'bow',     label:'Bow' },
+  { id:'crown',   label:'Crown' },
+  { id:'shades',  label:'Shades' },
+  { id:'halo',    label:'Halo' },
+  { id:'pirate',  label:'Pirate Hat' },
+  { id:'wings',   label:'Angel Wings' },
+  { id:'horns',   label:'Devil Horns' },
+  { id:'antenna', label:'Antenna' },
+  { id:'helmet',  label:'Viking Helm' },
+];
+function renderCustomize(){
+  const prev = $('#customize-preview');
+  const grid = $('#acc-grid');
+  if(!prev || !grid) return;
+  const skin = skinById(save.equipped);
+  prev.innerHTML = buildCatSVG(skin, playerAcc());
+  grid.innerHTML = '';
+  const mk = (label, acc, on) => {
+    const b = document.createElement('button');
+    b.className = 'acc-btn' + (on ? ' on' : '');
+    b.textContent = label;
+    b.dataset.acc = acc;
+    grid.appendChild(b);
+  };
+  mk('Default (skin)', '__default__', playerAcc() === undefined);
+  ACCESSORIES.forEach(a => mk(a.label, a.id, playerAcc() !== undefined && save.accOverride === a.id));
+}
+$('#acc-grid') && $('#acc-grid').addEventListener('click', e => {
+  const b = e.target.closest('.acc-btn');
+  if(!b) return;
+  save.accOverride = b.dataset.acc === '__default__' ? null : b.dataset.acc;
+  persist();
+  SFX.click();
+  renderCustomize();
+  refreshHeroes();
+});
 
 /* ---------------- level select ---------------- */
 function renderLevels(){
@@ -767,7 +900,7 @@ $('#level-grid').addEventListener('click', e => {
 
 /* ---------------- heroes on menu ---------------- */
 function refreshHeroes(){
-  mountCat($('#hero-player'), skinById(save.equipped));
+  mountCat($('#hero-player'), skinById(save.equipped), playerAcc());
   mountCat($('#hero-enemy'),  skinById(LEVELS[Math.min(save.bestLevel, LEVELS.length) - 1].skin));
   $('#menu-coins').querySelector('span').textContent = save.coins;
   $('#menu-progress').innerHTML = save.bestLevel > LEVELS.length
@@ -787,8 +920,10 @@ const G = {
   scared:false, lastWhimper:0, combo:0,
   keyboardMode:false, result:'',
   L:null, endless:false, wave:0,
+  /* power-ups */
+  puActive:null, puSpawnAt:0, puItem:null,
 };
-const Keys = { shout:false };
+const Keys = { shout:false, padShout:false };
 
 /* set when the player picks a specific level from the level-select screen */
 let pendingLevel = null;
@@ -804,7 +939,9 @@ function sensitivityVal(){ return save.sensitivity / 100; }
 
 /* raw player loudness 0..1 */
 function readPlayerRaw(dt){
-  if(Keys.shout) return 1;          // SPACE (quiet mode) or the on-screen SHOUT button
+  // if either the keyboard/space or the on-screen button or a gamepad is held, roar
+  const raw = Math.max(Keys.shout ? 1 : 0, Keys.padShout ? 1 : 0);
+  if(raw) return raw;
   if(G.keyboardMode) return 0;      // quiet mode: only the key/button roars
   const rms = Mic.readRms();
   const floor = Math.max(Mic.noiseFloor, 0.004);
@@ -820,6 +957,94 @@ function enemyRaw(t, L){
   const flutter = 0.90 + 0.20 * Math.sin(t * 5.1 + L.phase * 2);
   const roar    = Math.sin(t * 0.7 + L.phase) > 0.92 ? 1.28 : 1;
   return clamp(L.push * diff().push * wave * flutter * roar, 0, 1.3);
+}
+
+/* ---------------- power-ups ----------------
+   Random items spawn mid-fight. Shout loud to collect them. */
+const POWERUPS = [
+  { id:'damage',  name:'DAMAGE UP',   desc:'Deal 50% more damage for 8s',    color:'#f87171', dur:8 },
+  { id:'shield',  name:'SHIELD',      desc:'Take no damage for 5s',          color:'#38bdf8', dur:5 },
+  { id:'combo',   name:'DOUBLE COMBO',desc:'Combo gains are doubled for 8s', color:'#facc15', dur:8 },
+  { id:'heal',    name:'HEAL',        desc:'Restore 25 HP instantly',        color:'#4ade80', dur:0 },
+];
+/* an item floats in the arena; shout loud (myLevel > threshold) to grab it */
+function spawnPowerUp(){
+  if(G.puItem || G.puActive) return;
+  G.puItem = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
+  renderPowerUp();
+}
+function collectPowerUp(){
+  if(!G.puItem) return;
+  const pu = G.puItem;
+  G.puItem = null;
+  SFX.buy();
+  toast(icon('sparkle') + ' ' + pu.name + '!');
+  if(pu.id === 'heal'){
+    G.playerHP = Math.min(PLAYER_MAX, G.playerHP + 25);
+    updateHP();
+    spawnFx('player', '+25', '#4ade80');
+  } else {
+    G.puActive = Object.assign({}, pu, { expires: G.t + pu.dur });
+  }
+  renderPowerUp();
+}
+function getActivePU(){ return G.puActive || null; }
+function renderPowerUp(){
+  const el = $('#pu-indicator');
+  if(el){
+    if(G.puActive){
+      el.innerHTML = `<span class="pu-icon" style="border-color:${G.puActive.color};color:${G.puActive.color}">${G.puActive.name}</span>`;
+      el.style.display = 'flex';
+    } else {
+      el.style.display = 'none';
+      el.innerHTML = '';
+    }
+  }
+  const item = $('#pu-item');
+  if(item){
+    if(G.puItem){
+      item.textContent = '?';
+      item.style.borderColor = G.puItem.color;
+      item.style.color = G.puItem.color;
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  }
+}
+function updatePowerUps(dt){
+  // spawn a fresh item every ~10-16s once nothing is active
+  if(!G.puItem && !G.puActive && G.t >= G.puSpawnAt){
+    spawnPowerUp();
+    G.puSpawnAt = G.t + rand(10, 16);
+  }
+  // expire the active effect
+  if(G.puActive && G.puActive.dur > 0 && G.t >= G.puActive.expires){
+    G.puActive = null;
+    renderPowerUp();
+  }
+  // grab the floating item with a loud shout
+  if(G.puItem && G.myLevel > 0.6) collectPowerUp();
+}
+
+/* ---------------- arena background ----------------
+   A visual tier per stage: meadow → city → sunset → space.
+   Endless drifts through the same tiers as the wave count grows. */
+function applyArenaBg(level, endless, wave){
+  const arena = $('.arena');
+  if(!arena) return;
+  const n = endless ? (wave || 1) : level;
+  let bg = 'meadow';
+  if(endless){
+    if(n >= 15) bg = 'space';
+    else if(n >= 8) bg = 'sunset';
+    else if(n >= 4) bg = 'city';
+  } else {
+    if(n >= 14) bg = 'space';
+    else if(n >= 9) bg = 'sunset';
+    else if(n >= 5) bg = 'city';
+  }
+  arena.dataset.bg = bg;
 }
 
 /* ---------------- battle ---------------- */
@@ -840,10 +1065,11 @@ function startBattle(level, opts){
   G.lastMeow = -1; G.lastGrowl = -1;   // reset voice throttles so every fight makes sound
   G.scared = false; G.lastWhimper = 0;
   G.combo = 0;
+  G.puActive = null; G.puSpawnAt = rand(6, 10); G.puItem = null;
   G.paused = false; G.running = true;
   G.result = '';
 
-  mountCat($('#p-cat'), skinById(save.equipped));
+  mountCat($('#p-cat'), skinById(save.equipped), playerAcc());
   mountCat($('#e-cat'), skinById(L.skin));
   Meows.preload(L.snd);   // have the enemy's voice ready before the first shout
   Meows.preload(playerVoice().src);   // …and yours
@@ -853,6 +1079,8 @@ function startBattle(level, opts){
   $('#lvl-pill').textContent = G.endless ? 'WAVE ' + G.wave : 'LV ' + level + ' / ' + LEVELS.length;
   $('#pause-overlay').classList.remove('show');
   updateHP();
+  renderPowerUp();   // clear any stale power-up UI from the last fight
+  applyArenaBg(level, G.endless, G.wave);
   show('battle');
   /* VS intro card, then the fight begins */
   const vi = $('#vs-intro');
@@ -929,9 +1157,11 @@ function spawnFx(side, text, color){
 function landHit(byPlayer){
   const L = G.L;
   if(byPlayer){
-    const dmg = 14 + Math.round(G.myLevel * 10);
+    const pu = getActivePU();
+    let dmg = 14 + Math.round(G.myLevel * 10);
+    if(pu && pu.id === 'damage') dmg = Math.round(dmg * 1.5);
     G.enemyHP -= dmg;
-    G.combo++;
+    G.combo += (pu && pu.id === 'combo') ? 2 : 1;
     G.meter = 0;
     G.shake = 12;
     flash('player', 'attacking', 400);
@@ -939,7 +1169,9 @@ function landHit(byPlayer){
     spawnFx('enemy', '-' + dmg, '#ffffff');
     SFX.hit();
   } else {
-    const dmg = Math.round(L.dmg * diff().dmg);
+    const pu = getActivePU();
+    const shielded = pu && pu.id === 'shield';
+    const dmg = shielded ? 0 : Math.round(L.dmg * diff().dmg);
     G.playerHP -= dmg;
     G.combo = 0;
     G.meter = 0;
@@ -959,7 +1191,9 @@ function useSpecial(){
   if(!G.specialReady || !G.running || G.paused) return;
   G.special = 0; G.specialReady = false;
   const L = G.L;
-  const dmg = 40 + Math.round(G.enemyMax * 0.08);
+  const spPu = getActivePU();
+  let dmg = 40 + Math.round(G.enemyMax * 0.08);
+  if(spPu && spPu.id === 'damage') dmg = Math.round(dmg * 1.5);
   G.enemyHP -= dmg;
   G.meter = Math.min(100, G.meter + 34);
   G.shake = 22;
@@ -1023,6 +1257,8 @@ function updateBattle(dt){
   } else if(G.enemyLevelVal > voiceGate && G.t - G.lastGrowl > 1.1){
     G.lastGrowl = G.t; Meows.play(L.snd, { rate:L.rate });
   }
+
+  updatePowerUps(dt);
 
   render();
 }
@@ -1096,7 +1332,7 @@ function endBattle(won){
     const hpKeep = Math.round((G.playerHP / PLAYER_MAX) * 50);
     const flawless = G.playerHP >= PLAYER_MAX ? 50 : 0;
     const comboBonus = Math.max(0, G.combo - 1) * 3;   // +3 coins per hit beyond the first
-    coins = (G.endless ? 20 + G.wave * 4 : 25 + G.level * 5) + hpKeep + flawless + comboBonus;
+    coins = Math.round(((G.endless ? 20 + G.wave * 4 : 25 + G.level * 5) + hpKeep + flawless + comboBonus) * diff().coin);
     save.coins += coins;
     if(!save.stats) save.stats = {fightsWon:0, fightsLost:0, totalCoinsEarned:0};
     save.stats.fightsWon++;
@@ -1104,8 +1340,16 @@ function endBattle(won){
     if(G.combo > save.bestCombo) save.bestCombo = G.combo;
     if(G.endless){
       if(G.wave > (save.endlessBest || 0)) save.endlessBest = G.wave;
+      if(!Array.isArray(save.endlessRuns)) save.endlessRuns = [];
+      save.endlessRuns.push({ wave: G.wave, date: Date.now() });
+      save.endlessRuns = save.endlessRuns.sort((a, b) => b.wave - a.wave).slice(0, 10);
     } else if(G.level + 1 > save.bestLevel){
       save.bestLevel = Math.min(LEVELS.length + 1, G.level + 1);
+    }
+    if(G.combo > 0){
+      if(!Array.isArray(save.comboRuns)) save.comboRuns = [];
+      save.comboRuns.push({ combo: G.combo, date: Date.now() });
+      save.comboRuns = save.comboRuns.sort((a, b) => b.combo - a.combo).slice(0, 10);
     }
     checkAchievements(true, { playerHP: G.playerHP });
     persist();
@@ -1196,6 +1440,8 @@ function bind(){
   $('#btn-levels').addEventListener('click', () => { SFX.click(); renderLevels(); show('levels'); });
   $('#btn-achievements').addEventListener('click', () => { SFX.click(); renderAchievements(); show('achievements'); });
   $('#btn-stats').addEventListener('click', () => { SFX.click(); renderStats(); show('stats'); });
+  $('#btn-customize').addEventListener('click', () => { SFX.click(); renderCustomize(); show('customize'); });
+  $('#btn-daily').addEventListener('click', claimDaily);
   $('#btn-endless').addEventListener('click', () => { SFX.click(); pendingLevel = null; pendingEndless = 1; show('mic'); });
   $('#btn-shop').addEventListener('click', () => { SFX.click(); renderShop(); show('shop'); });
   $('#btn-reset').addEventListener('click', () => {
@@ -1251,6 +1497,7 @@ function bind(){
   $('#levels-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
   $('#achievements-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
   $('#stats-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
+  $('#customize-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
 
   /* tutorial: show once, then save tutorialSeen */
   $('#btn-tutorial-ok').addEventListener('click', () => {
@@ -1382,12 +1629,53 @@ function toggleTheme(){
   SFX.click();
 }
 
+/* ---------------- gamepad ----------------
+   A = hold to roar · B/X = MEGA MEOW · Start = pause.
+   Polled each frame (the Gamepad API has no events for button state). */
+const Gamepad = {
+  prev: {},
+  connected: false,
+  init(){
+    if(!navigator.getGamepads) return;
+    window.addEventListener('gamepadconnected', e => {
+      this.connected = true;
+      console.info('[Gamepad] connected:', e.gamepad.id);
+      toast(icon('sparkle') + ' Gamepad connected');
+    });
+    window.addEventListener('gamepaddisconnected', () => {
+      this.connected = false;
+      Keys.padShout = false;
+      toast('Gamepad disconnected');
+    });
+    const poll = () => { this.step(); requestAnimationFrame(poll); };
+    requestAnimationFrame(poll);
+  },
+  step(){
+    if(!navigator.getGamepads) return;
+    const pads = navigator.getGamepads();
+    let pad = null;
+    for(const p of pads){ if(p && p.connected){ pad = p; break; } }
+    if(!pad){ Keys.padShout = false; return; }
+    const inBattle = $('#screen-battle').classList.contains('active');
+    const down = i => !!(pad.buttons[i] && pad.buttons[i].pressed);
+    const just = (i, fn) => { if(down(i) && !this.prev[i]) fn(); this.prev[i] = down(i); };
+    // hold A (0) or shoulder (5/7) to roar
+    Keys.padShout = inBattle && (down(0) || down(5) || down(7));
+    // B (1) or X (2) → MEGA MEOW
+    just(1, () => { if(inBattle) useSpecial(); });
+    just(2, () => { if(inBattle) useSpecial(); });
+    // Start (9) → pause
+    just(9, () => { if(inBattle) pauseGame(); });
+  },
+};
+
 /* ---------------- boot ---------------- */
 function boot(){
   bind();
   applyTheme();
   refreshHeroes();
   updateSettingsUI();
+  updateDailyUI();
   $('#menu-mute').innerHTML = icon(save.muted ? 'mute' : 'sound');
   $('#battle-mute').innerHTML = icon(save.muted ? 'mute' : 'sound');
   /* show tutorial once for new players */
@@ -1395,4 +1683,21 @@ function boot(){
     $('#tutorial-overlay').hidden = false;
   }
 }
+
+/* ---------------- PWA: offline support ----------------
+   Register the service worker so the game works offline and can be
+   installed to the home screen. Needs a secure context (https/localhost). */
+function registerSW(){
+  if(!('serviceWorker' in navigator)) return;
+  if(location.protocol === 'file:') return;   // can't register from file://
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(
+      reg => console.info('[SW] registered:', reg.scope),
+      err => console.warn('[SW] registration failed:', err.message || err)
+    );
+  });
+}
+
 boot();
+registerSW();
+Gamepad.init();

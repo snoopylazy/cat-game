@@ -1,10 +1,11 @@
 # Cat vs Cat — Sound Battle
 
 A microphone-powered fighting game. **Shout louder than the enemy cat** to push
-the clash meter into their side and drain their HP. Beat all **17 levels** and
-unlock skins with the coins you earn.
+the clash meter into their side and drain their HP. Beat all **17 levels**, unlock
+**20 skins**, chase achievements, and dive into Endless Mode.
 
-No dependencies. No build step. Pure HTML + CSS + JS.
+No dependencies. No build step. Pure HTML + CSS + JS. **Installs as a PWA** and
+works offline after the first load.
 
 ---
 
@@ -37,7 +38,7 @@ Then open **http://localhost:8000** in Chrome/Edge/Safari and allow microphone a
 
 ### The voices
 Every cat has a **real recorded meow** (MP3 files in `sounds/`):
-- **You** — your equipped skin's own voice (each of the 16 skins sounds different).
+- **You** — your equipped skin's own voice (each skin sounds different).
 - **Each rival** — its own distinct meow, from cute kittens early on to angry toms at the
   end. The rival also taunts when a fight begins, cries out when it lands a hit,
   whimpers when it's nearly beaten, and makes a final cry when the level ends.
@@ -51,11 +52,30 @@ Every cat has a **real recorded meow** (MP3 files in `sounds/`):
 | **SPACE** (quiet mode) | Simulate a roar |
 | **Hold to shout** (touch devices) | On-screen roar button — for phones or no-mic play |
 | **F** or the button | Unleash **MEGA MEOW** when charged |
+| **Gamepad A / shoulder** (hold) | Roar · **B / X** MEGA MEOW · **Start** pause |
 | **Sensitivity slider** | Make the mic easier/harder to trigger |
 | **M** | Mute sound · **P / Esc** pause · **T** switch Dark/Light theme |
-| **Gear button** (menu) | Open **Settings** — set Cat-voice and Effects volume |
+| **Gear button** (menu) | Open **Settings** — set Cat-voice, Effects and Music volume + difficulty |
 | **Shop** | Spend coins on skins |
+| **Customize** | Give your equipped cat any accessory |
 | **Sun / Moon button** | Toggle Dark ↔ Light theme (top-right of menu & shop) |
+
+### Power-ups
+Random items float in the arena during a fight — **shout loud to grab one**:
+| Item | Effect |
+|---|---|
+| **DAMAGE UP** | Deal 50% more damage (incl. MEGA MEOW) for 8s |
+| **SHIELD** | Take no damage for 5s |
+| **DOUBLE COMBO** | Combo gains count double for 8s |
+| **HEAL** | Restore 25 HP instantly |
+
+### Menu extras
+- **Stats** — fights won/lost, win rate, coins earned, records, and local leaderboards
+  (top endless waves and best combos).
+- **Achievements** — 10 unlockable milestones, e.g. *Perfect* (flawless win) and *Legend*
+  (reach wave 20 in Endless).
+- **Daily reward** — claim once a day for coins; consecutive days raise the reward.
+- **Endless Mode** — unlocked after you beat the campaign; procedural waves forever.
 
 ---
 
@@ -63,8 +83,10 @@ Every cat has a **real recorded meow** (MP3 files in `sounds/`):
 
 - Win a level: `25 + level×5`, plus up to **+50** for HP kept and **+50** for a flawless win.
 - Lose: a small **+5** consolation.
-- **16 skins** from **Shadow** (free) up to **Cap'n Whiskers** (1,500).
+- **20 skins** from **Shadow** (free) up to **Robo-Cat** (2,500).
 - Each skin changes both your cat's **look** and its **voice**.
+- Harder **difficulty** settings pay out more coins
+  (Easy ×0.8 · Normal ×1.0 · Hard ×1.35).
 
 The full roster, in shop order:
 
@@ -86,8 +108,14 @@ The full roster, in shop order:
 | Professor Paws | 1,000 | tuxedo + shades |
 | Cosmic Neko | 1,200 | stars + halo |
 | Cap'n Whiskers | 1,500 | siamese points + pirate hat |
+| Angel Paws | 1,800 | angel wings |
+| Viking Whiskers | 2,000 | viking helmet |
+| Devil Claws | 2,200 | devil horns |
+| Robo-Cat | 2,500 | robot antenna |
 
 - Coins, owned skins and your equipped skin are saved in `localStorage`.
+- The **Customize** screen lets you give your equipped cat **any accessory** (from plain
+  scarf up to angel wings), independently of the skin you own.
 
 ## The 17 rivals
 
@@ -129,3 +157,35 @@ rows there and the level count updates everywhere automatically. Mic calibration
 lives in `readPlayerRaw()`.
 Cat-voice and effect volumes are saved in `save.volCat` / `save.volFx`
 (set them in-game from **Settings**, or edit the `DEFAULT_SAVE` values).
+
+Other tunables:
+- **Power-ups** — the `POWERUPS` array (effect, duration, colour).
+- **Endless curve** — `makeEndlessLevel()` scales `hits` / `push` / `dmg` per wave.
+- **Difficulty rewards** — the `coin` multiplier in `DIFFICULTY`.
+- **Arena tiers** — `applyArenaBg()` maps a level/wave number to a background.
+- **Skins & accessories** — add rows to `SKINS`; accessories are SVG groups
+  (`.acc-*`) toggled by the `a-*` class set in `buildCatSVG()`.
+
+---
+
+## Install & offline (PWA)
+
+The game ships `manifest.webmanifest` + `sw.js`, so a browser can **install it**
+(menu → *Install app* / *Add to Home Screen*) and it keeps working **offline**
+after the first visit. The service worker caches the app shell up front and
+caches each audio file the first time it plays.
+
+> Service workers need a secure context: `https://` or `http://localhost`.
+> They won't register over `file://`.
+
+## Project layout
+
+```
+index.html   markup + all screens/overlays
+style.css    theme variables + layout (dark & light)
+game.js      all game logic, audio, save, screens
+sounds/      real cat meows, music, effects
+sw.js        offline service worker
+manifest.webmanifest  PWA metadata
+icon.svg     app icon
+```
