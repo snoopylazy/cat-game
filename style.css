@@ -511,3 +511,33 @@ input[type=range]{accent-color:var(--cyan)}
 .ach-name{font-weight:900;font-size:.98rem}
 .ach-desc{font-size:.85rem;color:var(--muted);line-height:1.25}
 .ach-unlocked{font-size:.7rem;font-weight:800;color:var(--cyan);letter-spacing:1px;text-transform:uppercase}
+
+/* ---------- Stats ---------- */
+#screen-stats{justify-content:flex-start;padding-top:0}
+.stats-panel{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:12px;width:min(600px,94vw);margin-top:18px;padding-bottom:40px;
+}
+.stat-card{
+  background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+  padding:16px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink);
+}
+.stat-val{font-weight:900;font-size:1.6rem;color:var(--ink)}
+.stat-label{font-size:.8rem;color:var(--muted);text-align:center}
+
+/* ---------- Tutorial overlay ---------- */
+.tutorial-overlay{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-bg);backdrop-filter:blur(6px);padding:18px;
+}
+.tutorial-card{
+  background:var(--panel-bg);border:1.5px solid var(--line);border-radius:20px;
+  padding:26px 22px;max-width:480px;width:100%;display:flex;flex-direction:column;
+  align-items:center;gap:14px;color:var(--ink);text-align:center;
+}
+.tutorial-card h2{margin:0;font-size:1.3rem}
+.tutorial-steps{
+  margin:0;padding-left:22px;text-align:left;display:flex;flex-direction:column;gap:8px;
+  font-size:.92rem;line-height:1.4;color:var(--ink);
+}
+.tutorial-steps b{color:var(--cyan)}

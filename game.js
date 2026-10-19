@@ -151,7 +151,7 @@ function makeEndlessLevel(wave){
 
 /* ---------------- save ---------------- */
 const SAVE_KEY = 'catvscat.save.v1';
-const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25, volMusic:0.35, difficulty:'normal', bestCombo:0, endlessBest:0, achievements:{}, stats:{fightsWon:0, fightsLost:0, totalCoinsEarned:0} };
+const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25, volMusic:0.35, difficulty:'normal', bestCombo:0, endlessBest:0, achievements:{}, stats:{fightsWon:0, fightsLost:0, totalCoinsEarned:0}, tutorialSeen:false };
 let save = loadSave();
 function loadSave(){
   try{ return Object.assign({}, DEFAULT_SAVE, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); }
@@ -634,7 +634,7 @@ function mountCat(host, skin){
 }
 
 /* ---------------- screens ---------------- */
-const SCREENS = ['menu','levels','shop','achievements','settings','mic','calibrate','battle','result'];
+const SCREENS = ['menu','levels','shop','achievements','stats','settings','mic','calibrate','battle','result'];
 function show(name){
   SCREENS.forEach(s => $('#screen-' + s).classList.toggle('active', s === name));
 }
@@ -708,6 +708,29 @@ function renderAchievements(){
       (unlocked ? `<div class="ach-unlocked">Unlocked</div>` : `<div class="ach-unlocked" style="color:var(--muted)">Locked</div>`);
     grid.appendChild(item);
   });
+}
+
+/* ---------------- stats ---------------- */
+function renderStats(){
+  const panel = $('#stats-panel');
+  if(!panel) return;
+  const s = save.stats || {fightsWon:0, fightsLost:0, totalCoinsEarned:0};
+  const totalFights = s.fightsWon + s.fightsLost;
+  const winRate = totalFights > 0 ? Math.round((s.fightsWon / totalFights) * 100) : 0;
+  const levelsCleared = Math.max(0, Math.min(LEVELS.length + 1, save.bestLevel)) - 1;
+  const skinsOwned = save.owned ? save.owned.length : 0;
+  const stats = [
+    { val:s.fightsWon, label:'Fights Won' },
+    { val:s.fightsLost, label:'Fights Lost' },
+    { val:winRate + '%', label:'Win Rate' },
+    { val:s.totalCoinsEarned, label:'Total Coins Earned' },
+    { val:levelsCleared + ' / ' + LEVELS.length, label:'Levels Cleared' },
+    { val:save.bestCombo, label:'Best Combo' },
+    { val:save.endlessBest || 0, label:'Best Endless Wave' },
+    { val:skinsOwned + ' / ' + SKINS.length, label:'Skins Owned' },
+    { val:totalFights, label:'Total Fights' },
+  ];
+  panel.innerHTML = stats.map(st => `<div class="stat-card"><div class="stat-val">${st.val}</div><div class="stat-label">${st.label}</div></div>`).join('');
 }
 
 /* ---------------- level select ---------------- */
@@ -1172,6 +1195,7 @@ function bind(){
   $('#btn-play').addEventListener('click', () => { SFX.click(); pendingLevel = null; pendingEndless = null; getAudioCtx(); show('mic'); });
   $('#btn-levels').addEventListener('click', () => { SFX.click(); renderLevels(); show('levels'); });
   $('#btn-achievements').addEventListener('click', () => { SFX.click(); renderAchievements(); show('achievements'); });
+  $('#btn-stats').addEventListener('click', () => { SFX.click(); renderStats(); show('stats'); });
   $('#btn-endless').addEventListener('click', () => { SFX.click(); pendingLevel = null; pendingEndless = 1; show('mic'); });
   $('#btn-shop').addEventListener('click', () => { SFX.click(); renderShop(); show('shop'); });
   $('#btn-reset').addEventListener('click', () => {
@@ -1226,6 +1250,15 @@ function bind(){
   $('#shop-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
   $('#levels-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
   $('#achievements-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
+  $('#stats-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
+
+  /* tutorial: show once, then save tutorialSeen */
+  $('#btn-tutorial-ok').addEventListener('click', () => {
+    SFX.click();
+    save.tutorialSeen = true;
+    persist();
+    $('#tutorial-overlay').hidden = true;
+  });
 
   /* mic setup */
   $('#mic-back').addEventListener('click', () => { SFX.click(); pendingLevel = null; show('menu'); });
@@ -1357,5 +1390,9 @@ function boot(){
   updateSettingsUI();
   $('#menu-mute').innerHTML = icon(save.muted ? 'mute' : 'sound');
   $('#battle-mute').innerHTML = icon(save.muted ? 'mute' : 'sound');
+  /* show tutorial once for new players */
+  if(!save.tutorialSeen){
+    $('#tutorial-overlay').hidden = false;
+  }
 }
 boot();

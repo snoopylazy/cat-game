@@ -69,6 +69,7 @@ try{
       <button class="btn" id="btn-endless" hidden><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg>ENDLESS MODE</button>
       <button class="btn" id="btn-shop"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg>SKIN SHOP</button>
       <button class="btn" id="btn-achievements"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg>ACHIEVEMENTS</button>
+      <button class="btn" id="btn-stats"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg>STATS</button>
       <button class="btn btn-ghost" id="btn-reset"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg>Reset progress</button>
     </div>
     <p class="menu-hint" id="menu-progress">Level 1 / 17</p>
@@ -103,6 +104,33 @@ try{
     </header>
     <div class="achievements-grid" id="achievements-grid"></div>
   </section>
+
+  <!-- ============ STATS ============ -->
+  <section class="screen" id="screen-stats">
+    <header class="topbar">
+      <button class="icon-btn" id="stats-back" title="Back" aria-label="Back to menu"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+      <h2>Your Stats</h2>
+    </header>
+    <div class="stats-panel" id="stats-panel"></div>
+  </section>
+
+  <!-- ============ TUTORIAL OVERLAY ============ -->
+  <div class="tutorial-overlay" id="tutorial-overlay" hidden>
+    <div class="tutorial-card">
+      <div class="panel-icon accent-cyan"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></div>
+      <h2>How to Play</h2>
+      <ol class="tutorial-steps">
+        <li><b>Shout into your mic</b> — the louder you meow, the harder you push the clash meter toward the enemy.</li>
+        <li>When the meter reaches the <b>enemy's side</b>, you land a hit and deal damage.</li>
+        <li>When it reaches <b>your side</b>, you take a hit — so keep pushing!</li>
+        <li>Drain the enemy's <b>HP to 0</b> to win the level and earn coins.</li>
+        <li>Press <b>F</b> when the MEGA MEOW bar is full for a massive attack.</li>
+        <li>Spend coins in the <b>Skin Shop</b> for new looks and voices.</li>
+      </ol>
+      <p class="panel-note">Tip: use keyboard mode (SPACE to roar) if you don't have a mic.</p>
+      <button class="btn btn-primary" id="btn-tutorial-ok"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Got it!</button>
+    </div>
+  </div>
 
   <!-- ============ SETTINGS ============ -->
   <section class="screen" id="screen-settings">
