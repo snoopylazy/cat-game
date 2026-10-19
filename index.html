@@ -68,6 +68,7 @@ try{
       <button class="btn" id="btn-levels"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg>SELECT LEVEL</button>
       <button class="btn" id="btn-endless" hidden><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg>ENDLESS MODE</button>
       <button class="btn" id="btn-shop"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg>SKIN SHOP</button>
+      <button class="btn" id="btn-achievements"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg>ACHIEVEMENTS</button>
       <button class="btn btn-ghost" id="btn-reset"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg>Reset progress</button>
     </div>
     <p class="menu-hint" id="menu-progress">Level 1 / 17</p>
@@ -92,7 +93,16 @@ try{
       <div class="coin-pill"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg> <span id="levels-coins">0</span></div>
     </header>
     <div class="level-grid" id="level-grid"></div>
+    <!-- ============ ACHIEVEMENTS ============ -->
+  <section class="screen" id="screen-achievements">
+    <header class="topbar">
+      <button class="icon-btn" id="achievements-back" title="Back" aria-label="Back to menu"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+      <h2>Achievements</h2>
+    </header>
+    <div class="achievements-grid" id="achievements-grid"></div>
   </section>
+
+</section>
 
   <!-- ============ SETTINGS ============ -->
   <section class="screen" id="screen-settings">

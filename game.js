@@ -75,6 +75,52 @@ const PLAYER_POWER = 1.30;   // how hard your loudness pushes
 const METER_RATE = 62;       // meter units per second
 const SPECIAL_GAIN = 12;     // charge per second at full loudness
 
+/* ---------------- achievements ---------------- */
+const ACHIEVEMENTS = [
+  { id:'beat10', name:'Fighter', desc:'Beat 10 levels', icon:'trophy' },
+  { id:'beatAll', name:'Champion', desc:'Beat all 17 levels', icon:'crown' },
+  { id:'flawless', name:'Perfect', desc:'Win with full HP', icon:'sparkle' },
+  { id:'combo10', name:'Combo Master', desc:'Get a 10× combo', icon:'sparkle' },
+  { id:'combo20', name:'Unstoppable', desc:'Get a 20× combo', icon:'sparkle' },
+  { id:'wave5', name:'Survivor', desc:'Reach wave 5 in Endless', icon:'sparkle' },
+  { id:'wave10', name:'Veteran', desc:'Reach wave 10 in Endless', icon:'sparkle' },
+  { id:'wave20', name:'Legend', desc:'Reach wave 20 in Endless', icon:'crown' },
+  { id:'rich', name:'Collector', desc:'Earn 1000 coins total', icon:'coin' },
+  { id:'allSkins', name:'Fashionista', desc:'Own every skin', icon:'bag' },
+];
+function hasAchievement(id){ return !!(save.achievements && save.achievements[id]); }
+function grantAchievement(id){
+  if(!save.achievements) save.achievements = {};
+  if(!save.achievements[id]){
+    save.achievements[id] = Date.now();
+    persist();
+    toast(icon(ACHIEVEMENTS.find(a => a.id === id)?.icon || 'sparkle') + ' Achievement: ' + (ACHIEVEMENTS.find(a => a.id === id)?.name || id));
+  }
+}
+function checkAchievements(won, battle){
+  if(!won) return;
+  const totalOwned = save.owned && save.owned.length;
+  const allSkinIds = SKINS.map(s => s.id);
+  const ownsAll = allSkinIds.every(id => save.owned.includes(id));
+  const levelsBeat = Math.max(0, Math.min(LEVELS.length + 1, save.bestLevel)) - 1;
+  // Beat counts
+  if(levelsBeat >= 10) grantAchievement('beat10');
+  if(save.bestLevel > LEVELS.length) grantAchievement('beatAll');
+  // Flawless
+  if(battle && battle.playerHP >= PLAYER_MAX) grantAchievement('flawless');
+  // Combos
+  if(save.bestCombo >= 20) grantAchievement('combo20');
+  if(save.bestCombo >= 10) grantAchievement('combo10');
+  // Endless waves
+  if((save.endlessBest || 0) >= 20) grantAchievement('wave20');
+  if((save.endlessBest || 0) >= 10) grantAchievement('wave10');
+  if((save.endlessBest || 0) >= 5) grantAchievement('wave5');
+  // Coins total (approximate via save.coins? but we also track earned; better use coins count as proxy)
+  if(save.coins >= 1000) grantAchievement('rich');
+  // All skins
+  if(ownsAll) grantAchievement('allSkins');
+}
+
 /* difficulty presets — scale the enemy's push and the damage it deals */
 const DIFFICULTY = {
   easy:   { label:'Easy',   push:0.80, dmg:0.75 },
@@ -105,7 +151,7 @@ function makeEndlessLevel(wave){
 
 /* ---------------- save ---------------- */
 const SAVE_KEY = 'catvscat.save.v1';
-const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25, volMusic:0.35, difficulty:'normal', bestCombo:0, endlessBest:0 };
+const DEFAULT_SAVE = { coins:75, owned:['shadow'], equipped:'shadow', bestLevel:1, muted:false, sensitivity:55, theme:'dark', volCat:0.85, volFx:0.25, volMusic:0.35, difficulty:'normal', bestCombo:0, endlessBest:0, achievements:{}, stats:{fightsWon:0, fightsLost:0, totalCoinsEarned:0} };
 let save = loadSave();
 function loadSave(){
   try{ return Object.assign({}, DEFAULT_SAVE, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); }
@@ -588,7 +634,7 @@ function mountCat(host, skin){
 }
 
 /* ---------------- screens ---------------- */
-const SCREENS = ['menu','levels','shop','settings','mic','calibrate','battle','result'];
+const SCREENS = ['menu','levels','shop','achievements','settings','mic','calibrate','battle','result'];
 function show(name){
   SCREENS.forEach(s => $('#screen-' + s).classList.toggle('active', s === name));
 }
@@ -644,6 +690,25 @@ $('#shop-grid').addEventListener('click', e => {
   renderShop();
   refreshHeroes();
 });
+
+/* ---------------- achievements ---------------- */
+function renderAchievements(){
+  const grid = $('#achievements-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  if(!save.achievements) save.achievements = {};
+  ACHIEVEMENTS.forEach(a => {
+    const unlocked = !!save.achievements[a.id];
+    const item = document.createElement('div');
+    item.className = 'ach-item' + (unlocked ? ' unlocked' : ' locked');
+    const date = unlocked ? new Date(save.achievements[a.id]).toLocaleDateString() : '';
+    item.innerHTML = `<div class="ach-icon">${icon(a.icon)}</div>` +
+      `<div class="ach-text"><div class="ach-name">${a.name}</div>` +
+      `<div class="ach-desc">${a.desc}</div></div>` +
+      (unlocked ? `<div class="ach-unlocked">Unlocked</div>` : `<div class="ach-unlocked" style="color:var(--muted)">Locked</div>`);
+    grid.appendChild(item);
+  });
+}
 
 /* ---------------- level select ---------------- */
 function renderLevels(){
@@ -1010,12 +1075,16 @@ function endBattle(won){
     const comboBonus = Math.max(0, G.combo - 1) * 3;   // +3 coins per hit beyond the first
     coins = (G.endless ? 20 + G.wave * 4 : 25 + G.level * 5) + hpKeep + flawless + comboBonus;
     save.coins += coins;
+    if(!save.stats) save.stats = {fightsWon:0, fightsLost:0, totalCoinsEarned:0};
+    save.stats.fightsWon++;
+    save.stats.totalCoinsEarned += coins;
     if(G.combo > save.bestCombo) save.bestCombo = G.combo;
     if(G.endless){
       if(G.wave > (save.endlessBest || 0)) save.endlessBest = G.wave;
     } else if(G.level + 1 > save.bestLevel){
       save.bestLevel = Math.min(LEVELS.length + 1, G.level + 1);
     }
+    checkAchievements(true, { playerHP: G.playerHP });
     persist();
     if(!G.endless && G.level < LEVELS.length) Meows.preload(LEVELS[G.level].snd);   // warm the next rival's voice
     SFX.win();
@@ -1024,6 +1093,9 @@ function endBattle(won){
   } else {
     coins = 5;
     save.coins += coins;
+    if(!save.stats) save.stats = {fightsWon:0, fightsLost:0, totalCoinsEarned:0};
+    save.stats.fightsLost++;
+    save.stats.totalCoinsEarned += coins;
     persist();
     SFX.lose();
     // the rival's triumphant meow
@@ -1099,6 +1171,7 @@ function bind(){
   /* menu */
   $('#btn-play').addEventListener('click', () => { SFX.click(); pendingLevel = null; pendingEndless = null; getAudioCtx(); show('mic'); });
   $('#btn-levels').addEventListener('click', () => { SFX.click(); renderLevels(); show('levels'); });
+  $('#btn-achievements').addEventListener('click', () => { SFX.click(); renderAchievements(); show('achievements'); });
   $('#btn-endless').addEventListener('click', () => { SFX.click(); pendingLevel = null; pendingEndless = 1; show('mic'); });
   $('#btn-shop').addEventListener('click', () => { SFX.click(); renderShop(); show('shop'); });
   $('#btn-reset').addEventListener('click', () => {
@@ -1152,6 +1225,7 @@ function bind(){
   /* shop */
   $('#shop-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
   $('#levels-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
+  $('#achievements-back').addEventListener('click', () => { SFX.click(); refreshHeroes(); show('menu'); });
 
   /* mic setup */
   $('#mic-back').addEventListener('click', () => { SFX.click(); pendingLevel = null; show('menu'); });
